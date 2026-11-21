@@ -1853,7 +1853,7 @@
         </div>
       </div>
       <label class="login-remember">
-        <input type="checkbox" id="loginRemember"> 記住我（7天免登入）
+        <input type="checkbox" id="loginRemember" checked> 記住我（這台裝置之後不用再輸入密碼）
       </label>
       <button class="login-btn" onclick="doLogin()">登 入</button>
       <div class="login-error" id="loginError"></div>
@@ -2977,7 +2977,7 @@ let _currentUser = null;
 // ── 雲端傳送方式 ──
 // Apps Script 只能用 POST 收、也無法回傳 HTTP 狀態碼，所以把方法、路徑、權杖包進內容，
 // 狀態碼放在回應的 s 欄位；Content-Type 用 text/plain 才不會觸發瀏覽器的 CORS 預檢。
-// 跨網域用不了 Cookie，登入狀態改用權杖：勾「記住我」存 localStorage（7 天），否則存 sessionStorage。
+// 跨網域用不了 Cookie，登入狀態改用權杖：勾「記住我」存 localStorage（180 天、有在用就自動延長），否則存 sessionStorage。
 const CLOUD_TOKEN_KEY = 'skpro_cloud_token';
 function cloudToken() {
   try { return sessionStorage.getItem(CLOUD_TOKEN_KEY) || localStorage.getItem(CLOUD_TOKEN_KEY) || ''; } catch { return ''; }
@@ -5548,7 +5548,19 @@ async function loadAllData() {
 function showLogin() {
   document.getElementById('loginOverlay').classList.add('open');
   showLoginForm();
-  setTimeout(() => document.getElementById('loginUser').focus(), 100);
+  // 帶入這台裝置上次登入的帳號，只要輸入密碼
+  const userEl = document.getElementById('loginUser');
+  setTimeout(() => (userEl.value ? document.getElementById('loginPass') : userEl).focus(), 100);
+}
+
+// 「記住我」預設勾選（勾了＝這台裝置之後不用再輸入密碼）；使用者取消勾選過就記住他的選擇
+const REMEMBER_PREF_KEY = 'skpro_remember_pref';
+const LAST_USER_KEY = 'skpro_last_user';
+function loadLoginPrefs() {
+  let pref = null, last = '';
+  try { pref = localStorage.getItem(REMEMBER_PREF_KEY); last = localStorage.getItem(LAST_USER_KEY) || ''; } catch {}
+  document.getElementById('loginRemember').checked = pref !== '0';
+  if (last) document.getElementById('loginUser').value = last;
 }
 
 function hideLogin() {
@@ -5580,6 +5592,7 @@ function showLoginForm() {
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
   document.getElementById('loginError').textContent = '';
+  loadLoginPrefs();
 }
 
 async function doRegister() {
@@ -5628,6 +5641,10 @@ async function doLogin() {
     errEl.textContent = e.message || '登入失敗，請稍後再試';
     return;
   }
+  try {
+    localStorage.setItem(REMEMBER_PREF_KEY, remember ? '1' : '0');
+    localStorage.setItem(LAST_USER_KEY, username);
+  } catch {}
 
   await afterAuthenticated(user);
   toast(`歡迎回來，${user.displayName}！`, 'success');
@@ -6355,7 +6372,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '1bdf81b76a0b';
+const BUILD_ID = '627ea2276988';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
