@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0a1628">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="新光保全">
+<meta name="apple-mobile-web-app-title" content="新光保全管理系統">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   :root {
@@ -6355,7 +6355,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '1c53730ecf61';
+const BUILD_ID = '1bdf81b76a0b';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -6433,7 +6433,7 @@ function maybeShowInstallBar() {
   bar.innerHTML =
     '<img src="icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px;flex-shrink:0">' +
     '<div style="flex:1;min-width:0"><b style="color:#f5c842">加到主畫面，像 App 一樣開啟</b><br>' +
-    (ios ? '點瀏覽器的 <b>分享</b>（方框＋向上箭頭），再選「<b>加入主畫面</b>」' : '桌面會出現新光保全圖示，點一下就開') +
+    (ios ? '點瀏覽器的 <b>分享</b>（方框＋向上箭頭），再選「<b>加入主畫面</b>」' : '桌面會出現「新光保全管理系統」圖示，點一下就開') +
     '</div>' +
     '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">' +
     (ios ? '' : '<button id="installBtn" style="background:#f5c842;color:#0a1628;border:0;border-radius:8px;padding:7px 12px;font-weight:700">安裝</button>') +
