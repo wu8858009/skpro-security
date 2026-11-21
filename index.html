@@ -6177,6 +6177,60 @@ function deleteBlueprint(id) {
 }
 //  INIT
 // ══════════════════════════════════════════
+// ── 新版偵測（雲端網頁版）──
+// 建置時 build_web.py 會填入 BUILD_ID 並產生 version.json；空白＝不檢查（單機版）。
+// 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
+//   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
+// 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
+const BUILD_ID = 'd7a34078e128';
+let _newBuild = null;
+function isBusyEditing() {
+  return !!document.querySelector('.modal-overlay.open, .lightbox.open');
+}
+function applyUpdate() {
+  try {
+    if (sessionStorage.getItem('skpro_reload_to') === _newBuild) return; // 已經試過一次，避免一直重整
+    sessionStorage.setItem('skpro_reload_to', _newBuild);
+  } catch {}
+  const u = new URL(location.href);
+  u.searchParams.set('v', _newBuild);
+  location.replace(u.toString());
+}
+function showUpdateBar() {
+  if (document.getElementById('updateBar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'updateBar';
+  bar.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99999;' +
+    'background:#1d4ed8;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.35);' +
+    'display:flex;gap:10px;align-items:center;font-size:14px;max-width:calc(100vw - 32px)';
+  bar.innerHTML = '<span>系統有新版本，存好資料後按「更新」即可套用</span>' +
+    '<button style="background:#fff;color:#1d4ed8;border:0;border-radius:6px;padding:6px 12px;font-weight:700;cursor:pointer;white-space:nowrap">更新</button>';
+  bar.querySelector('button').onclick = applyUpdate;
+  document.body.appendChild(bar);
+}
+async function checkForUpdate() {
+  if (!BUILD_ID) return;
+  if (_newBuild) { if (!isBusyEditing()) applyUpdate(); return; }
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const v = await r.json();
+    if (!v.build || v.build === BUILD_ID) return;
+    _newBuild = v.build;
+    if (isBusyEditing()) showUpdateBar(); else applyUpdate();
+  } catch {}
+}
+if (BUILD_ID) {
+  // 換到新版後把網址上的 ?v= 拿掉，看起來乾淨
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.has('v')) { u.searchParams.delete('v'); history.replaceState(null, '', u.toString()); }
+  } catch {}
+  setInterval(checkForUpdate, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+  setTimeout(checkForUpdate, 5000);
+}
+
 (async () => {
   // Demo/seed data and initial-admin bootstrapping are now handled server-side
   // (see Program.cs SeedInitialAdminAsync) — the client just restores whatever
