@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>新光保全 ─ 企業級保全管理系統 PRO</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0a1628">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="新光保全">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   :root {
     --primary: #1a3a5c;
@@ -5487,6 +5495,7 @@ async function afterAuthenticated(user) {
   if (fabEl) fabEl.style.display = 'none';
   switchPage('dashboard');
   startSessionWatcher();
+  setTimeout(maybeShowInstallBar, 1500);
 }
 
 // 頁籤上的筆數（登入後、以及同步到其他裝置的變更後更新）
@@ -6346,7 +6355,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'b0f8c34fbe97';
+const BUILD_ID = '1c53730ecf61';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -6388,6 +6397,62 @@ async function checkForUpdate() {
     if (isBusyEditing()) showUpdateBar(); else applyUpdate();
   } catch {}
 }
+// ── 加入主畫面（變成 App）──
+// 雲端網頁版才有：註冊 service worker（Android 才會給安裝選項），
+// 手機用瀏覽器開、還沒裝成 App 時，登入後在底部提示一次：
+//   Android → 按「安裝」直接跳出系統安裝視窗；iPhone → 教怎麼從「分享」加入主畫面。
+// 按「之後再說」30 天內不再提示；已經是從主畫面開的 App 就不提示。
+let _installPromptEvent = null;
+const INSTALL_DISMISS_KEY = 'skpro_install_dismissed';
+function isStandaloneApp() {
+  return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+if (CLOUD_URL) {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); _installPromptEvent = e; maybeShowInstallBar(); });
+  window.addEventListener('appinstalled', () => { _installPromptEvent = null; hideInstallBar(); toast('已加入主畫面，之後從桌面圖示開啟即可', 'success'); });
+}
+function hideInstallBar() { const b = document.getElementById('installBar'); if (b) b.remove(); }
+function maybeShowInstallBar() {
+  if (!CLOUD_URL || !_currentUser || isStandaloneApp() || document.getElementById('installBar')) return;
+  if (!document.body.classList.contains('mob-mode')) return;
+  try {
+    const t = Number(localStorage.getItem(INSTALL_DISMISS_KEY) || 0);
+    if (Date.now() - t < 30 * 86400000) return;
+  } catch {}
+  const ios = isIOS();
+  if (!ios && !_installPromptEvent) return; // Android 還沒準備好安裝事件，等 beforeinstallprompt 再來
+  const bar = document.createElement('div');
+  bar.id = 'installBar';
+  bar.style.cssText = 'position:fixed;left:10px;right:10px;bottom:72px;z-index:9000;background:#152438;' +
+    'border:1px solid rgba(245,200,66,.45);border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center;' +
+    'box-shadow:0 8px 24px rgba(0,0,0,.45);color:#e2e8f0;font-size:13px;line-height:1.5';
+  bar.innerHTML =
+    '<img src="icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px;flex-shrink:0">' +
+    '<div style="flex:1;min-width:0"><b style="color:#f5c842">加到主畫面，像 App 一樣開啟</b><br>' +
+    (ios ? '點瀏覽器的 <b>分享</b>（方框＋向上箭頭），再選「<b>加入主畫面</b>」' : '桌面會出現新光保全圖示，點一下就開') +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">' +
+    (ios ? '' : '<button id="installBtn" style="background:#f5c842;color:#0a1628;border:0;border-radius:8px;padding:7px 12px;font-weight:700">安裝</button>') +
+    '<button id="installLater" style="background:none;color:#94a3b8;border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px">之後再說</button>' +
+    '</div>';
+  document.body.appendChild(bar);
+  const later = bar.querySelector('#installLater');
+  later.onclick = () => { try { localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); } catch {} hideInstallBar(); };
+  const btn = bar.querySelector('#installBtn');
+  if (btn) btn.onclick = async () => {
+    const ev = _installPromptEvent;
+    if (!ev) return hideInstallBar();
+    _installPromptEvent = null;
+    ev.prompt();
+    try { await ev.userChoice; } catch {}
+    hideInstallBar();
+  };
+}
+
 // ── 手機版表格變卡片 ──
 // 表格內容是各頁用程式畫出來的，畫完後替每一格補上欄名（data-label），手機版樣式用它顯示「欄名：內容」；
 // 內容是空的（—）就標記起來，手機版不顯示那一行，卡片才不會一堆空欄。
