@@ -2883,18 +2883,26 @@ async function cloudFetch(path, options = {}) {
   } else if (options.body) {
     body = JSON.parse(options.body);
   }
-  let res;
-  try {
-    res = await fetch(CLOUD_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ m: (options.method || 'GET').toUpperCase(), p: path, t: cloudToken(), b: body, u: navigator.userAgent }),
-    });
-  } catch (e) {
-    throw new Error('無法連線到雲端，請確認網路');
-  }
+  const method = (options.method || 'GET').toUpperCase();
+  const isWrite = method !== 'GET' && !/^\/auth\//.test(path);
+  if (isWrite) _syncWritesInFlight++;
   let reply;
-  try { reply = await res.json(); } catch { throw new Error('雲端回應異常，請稍後再試'); }
+  try {
+    let res;
+    try {
+      res = await fetch(CLOUD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ m: method, p: path, t: cloudToken(), b: body, u: navigator.userAgent }),
+      });
+    } catch (e) {
+      throw new Error('無法連線到雲端，請確認網路');
+    }
+    try { reply = await res.json(); } catch { throw new Error('雲端回應異常，請稍後再試'); }
+    if (isWrite) noteOwnWrite(reply.rv);
+  } finally {
+    if (isWrite) _syncWritesInFlight--;
+  }
   if (path === '/auth/login') { if (reply.s === 200 && reply.nt) setCloudToken(reply.nt, !!(body && body.remember)); }
   else if (reply.nt) setCloudToken(reply.nt);
   if (path === '/auth/logout' || (reply.s === 401 && path !== '/users/change-password')) clearCloudToken();
@@ -5355,6 +5363,15 @@ async function afterAuthenticated(user) {
   updateHeaderUser(user);
   resetActivityTime();
   renderDashboard();
+  updateMainBadges();
+  const fabEl = document.getElementById('mobFab');
+  if (fabEl) fabEl.style.display = 'none';
+  switchPage('dashboard');
+  startSessionWatcher();
+}
+
+// 頁籤上的筆數（登入後、以及同步到其他裝置的變更後更新）
+function updateMainBadges() {
   document.getElementById('badge-contacts').textContent = DB.get('contacts').length;
   document.getElementById('badge-cards').textContent    = DB.get('cards').length;
   document.getElementById('badge-keys').textContent     = DB.get('keys').length;
@@ -5364,15 +5381,13 @@ async function afterAuthenticated(user) {
   if (histBadge) histBadge.textContent = DB.get('historicalContacts').length;
   document.getElementById('mob-badge-contacts').textContent = DB.get('contacts').length;
   document.getElementById('mob-badge-keys').textContent = DB.get('keys').length;
-  const fabEl = document.getElementById('mobFab');
-  if (fabEl) fabEl.style.display = 'none';
-  switchPage('dashboard');
-  startSessionWatcher();
 }
 
-// Fetches all module data from the API into the in-memory cache. Called once
-// right after authentication succeeds (fresh login or page-reload restore).
+// Fetches all module data from the API into the in-memory cache. Called right
+// after authentication succeeds, and again whenever another device changed data.
 async function loadAllData() {
+  // 先記下雲端資料版號再抓資料：抓的途中有人改了，下一輪查版號會發現不同而再抓一次
+  const syncAt = CLOUD_URL ? await apiJson('/sync').catch(() => null) : null;
   const [contacts, cards, keys, stores, announcements, blueprints, policy] = await Promise.all([
     apiJson('/contacts'), apiJson('/cards'), apiJson('/keys'), apiJson('/stores'),
     apiJson('/announcements'), apiJson('/blueprints'), apiJson('/systempolicy'),
@@ -5399,6 +5414,7 @@ async function loadAllData() {
   } else {
     _cache.users = [];
   }
+  if (syncAt && syncAt.rev != null) _syncRev = syncAt.rev;
 }
 
 function showLogin() {
@@ -6211,10 +6227,14 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'a2143484eb7f';
+const BUILD_ID = 'fe8fef110689';
 let _newBuild = null;
+// 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
-  return !!document.querySelector('.modal-overlay.open, .lightbox.open');
+  if (document.querySelector('.modal-overlay.open, .lightbox.open')) return true;
+  const a = document.activeElement;
+  return !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' ||
+    (a.tagName === 'INPUT' && !['button', 'submit', 'checkbox', 'radio', 'file'].includes(a.type)) || a.isContentEditable);
 }
 function applyUpdate() {
   try {
@@ -6249,6 +6269,46 @@ async function checkForUpdate() {
     if (isBusyEditing()) showUpdateBar(); else applyUpdate();
   } catch {}
 }
+// ── 多裝置自動同步（雲端版）──
+// 每 8 秒（畫面開著時）問一次雲端「資料版號」，跟自己畫面上的不一樣＝別台裝置改過資料 → 重抓全部資料並重畫。
+// 自己存檔時雲端回傳的新版號會直接記下來，所以自己改的不會重抓。
+// 正在編輯（開著新增／編輯視窗）或自己還有存檔沒送完時先不重抓，等下一輪再看，避免打到一半的內容被蓋掉。
+const SYNC_POLL_MS = 8000;
+let _syncRev = null;           // 目前畫面上的資料對應的雲端版號
+let _syncWritesInFlight = 0;   // 自己送出、還沒收到回應的存檔數
+let _syncBusy = false;
+function noteOwnWrite(rv) {
+  if (rv == null || _syncRev == null) return;
+  if (rv === _syncRev + 1) _syncRev = rv; // 只有自己這一筆變動；跳更多＝別人也改了，留給下一輪重抓
+}
+function canSyncNow() {
+  return CLOUD_URL && _currentUser && !document.hidden && _syncWritesInFlight === 0 && !isBusyEditing();
+}
+async function pollSync() {
+  if (_syncBusy || !canSyncNow()) return;
+  _syncBusy = true;
+  try {
+    const r = await apiJson('/sync');
+    if (!r || r.rev == null) return;
+    if (_syncRev == null) { _syncRev = r.rev; return; }
+    if (r.rev === _syncRev || !canSyncNow()) return;
+    await loadAllData();
+    if (!_currentUser) return;
+    updateMainBadges();
+    if (!isBusyEditing()) refreshCurrentPage();
+    toast('已同步其他裝置的最新資料', 'success');
+  } catch (e) {
+    console.warn('同步檢查失敗', e);
+  } finally {
+    _syncBusy = false;
+  }
+}
+if (CLOUD_URL) {
+  setInterval(pollSync, SYNC_POLL_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pollSync(); });
+  window.addEventListener('online', pollSync);
+}
+
 if (BUILD_ID) {
   // 換到新版後把網址上的 ?v= 拿掉，看起來乾淨
   try {
