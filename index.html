@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>新光保全 ─ 企業級保全管理系統 PRO</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -1814,9 +1814,49 @@
   /* 新增聯絡人的浮動按鈕只在聯絡人頁出現 */
   body.mob-mode:not([data-page="contacts"]) .mob-fab { display: none !important; }
 
-  /* 底部導覽列：7 個項目平均分、字小一點不擠 */
-  body.mob-mode .mob-nav { padding-bottom: env(safe-area-inset-bottom); }
-  body.mob-mode .mob-tab { min-width: 0; flex: 1; }
+  /* ── 底部導覽列：依每格寬度（fitMobileNav 算好放在 data-size）自動調整 ── */
+  body.mob-mode .mob-nav {
+    height: auto; min-height: 0; align-items: stretch;
+    /* iPhone 底部橫條、橫放時瀏海：留出安全區 */
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  /* 手指好按：直放至少 56px 高；平板 52px；橫拿 44px */
+  body.mob-mode .mob-tab { min-width: 0; flex: 1 1 0; padding: 8px 2px 7px; gap: 3px; min-height: 56px; }
+  body.mob-mode .mob-nav[data-size="lg"] .mob-tab { min-height: 52px; }
+  body.mob-mode .mob-nav[data-land="1"] .mob-tab { min-height: 44px; }
+  body.mob-mode .mob-tab.tab-perm-hidden { display: none !important; }
+  body.mob-mode .mob-tab > span:not(.mt-icon):not(.badge) {
+    max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+  }
+  /* 一般手機（每格 58～95px） */
+  body.mob-mode .mob-nav[data-size="md"] .mob-tab { font-size: 11px; }
+  body.mob-mode .mob-nav[data-size="md"] .mt-icon { font-size: 21px; }
+  /* 小螢幕（每格 46～57px）：字小一點 */
+  body.mob-mode .mob-nav[data-size="sm"] .mob-tab { font-size: 9.5px; padding: 7px 1px 6px; }
+  body.mob-mode .mob-nav[data-size="sm"] .mt-icon { font-size: 19px; }
+  /* 很窄（每格 < 46px）：只顯示圖示，目前所在頁才顯示文字 */
+  body.mob-mode .mob-nav[data-size="xs"] .mob-tab { font-size: 9px; padding: 9px 0 8px; }
+  body.mob-mode .mob-nav[data-size="xs"] .mt-icon { font-size: 20px; }
+  body.mob-mode .mob-nav[data-size="xs"] .mob-tab:not(.active) > span:not(.mt-icon):not(.badge) { display: none; }
+  /* 寬（平板直放、手機橫放，每格 ≥ 96px）：圖示和文字並排 */
+  body.mob-mode .mob-nav[data-size="lg"] .mob-tab { flex-direction: row; gap: 6px; font-size: 13px; padding: 12px 4px; }
+  body.mob-mode .mob-nav[data-size="lg"] .mt-icon { font-size: 20px; }
+  /* 手機橫拿（高度很矮）：導覽列變扁 */
+  body.mob-mode .mob-nav[data-land="1"] .mob-tab { flex-direction: row; gap: 5px; padding: 6px 4px; font-size: 12px; }
+  body.mob-mode .mob-nav[data-land="1"] .mt-icon { font-size: 17px; }
+  /* 數字徽章跟著圖示走，不會跑到隔壁格 */
+  body.mob-mode .mob-tab .badge { top: 3px; right: auto; left: calc(50% + 6px); }
+  body.mob-mode .mob-nav[data-size="lg"] .mob-tab .badge,
+  body.mob-mode .mob-nav[data-land="1"] .mob-tab .badge { position: static; margin-left: 2px; }
+  /* 內容底部、浮動按鈕、通知、安裝提示都依導覽列實際高度讓位 */
+  body.mob-mode .container { padding-bottom: calc(var(--mob-nav-h, 64px) + 20px) !important; }
+  body.mob-mode .mob-fab { bottom: calc(var(--mob-nav-h, 64px) + 12px); right: calc(16px + env(safe-area-inset-right)); }
+  body.mob-mode .toast-container { bottom: calc(var(--mob-nav-h, 64px) + 12px); }
+  body.mob-mode #installBar { bottom: calc(var(--mob-nav-h, 64px) + 10px) !important; }
+  body.mob-mode #updateBar { bottom: calc(var(--mob-nav-h, 64px) + 10px) !important; }
+  /* 橫放時左右瀏海 */
+  body.mob-mode .header { padding-left: calc(10px + env(safe-area-inset-left)); padding-right: calc(10px + env(safe-area-inset-right)); }
+  body.mob-mode .container { padding-left: calc(12px + env(safe-area-inset-left)) !important; padding-right: calc(12px + env(safe-area-inset-right)) !important; }
 
   /* 設計圖：一欄大圖 */
   body.mob-mode .blueprint-grid { grid-template-columns: 1fr; gap: 12px; }
@@ -3946,6 +3986,7 @@ function applyViewMode(isMobile) {
   const pageId = page ? page.id.replace('page-', '') : '';
   if (fab) fab.style.display = (isMobile && pageId === 'contacts') ? '' : 'none';
   if (pageId === 'contacts') renderContacts();
+  fitMobileNav();
 }
 
 // 自動偵測裝置螢幕：
@@ -5440,18 +5481,41 @@ function setSession(user) {
 // 根據使用者的 allowedPages 顯示/隱藏頁籤
 function applyPagePermissions(user) {
   ALL_PAGES.forEach(({ id }) => {
-    const el = document.getElementById('nav-tab-' + id);
-    if (!el) return;
     // superadmin 或未設限（allowedPages 為 null/空）→ 全部顯示
     const noRestriction = !user || user.role === 'superadmin'
       || !user.allowedPages || user.allowedPages.length === 0;
-    if (noRestriction || user.allowedPages.includes(id)) {
-      el.classList.remove('tab-perm-hidden');
-    } else {
-      el.classList.add('tab-perm-hidden');
-    }
+    const hidden = !(noRestriction || user.allowedPages.includes(id));
+    // 電腦版上方頁籤＋手機版底部導覽列一起處理（手機版原本沒藏，點了才跳「沒有權限」）
+    ['nav-tab-', 'mob-tab-'].forEach(prefix => {
+      const el = document.getElementById(prefix + id);
+      if (el) el.classList.toggle('tab-perm-hidden', hidden);
+    });
+  });
+  fitMobileNav();
+}
+
+// ── 手機版底部導覽列：依螢幕大小與看得到的項目數自動調整 ──
+// 每格寬度 = 畫面寬 ÷ 顯示中的項目數：
+//   < 46px 只顯示圖示（目前所在頁仍顯示文字）／ < 58px 小字 ／ 一般 ／ ≥ 96px 圖示和文字並排（平板、橫放）
+// 橫放且高度很矮（手機橫拿）→ 導覽列變扁、圖示文字並排。
+// 實際高度寫進 --mob-nav-h，內容底部留白、浮動按鈕、提示框都跟著它，不會被擋住。
+function fitMobileNav() {
+  const nav = document.getElementById('mobNav');
+  if (!nav) return;
+  if (!document.body.classList.contains('mob-mode')) {
+    document.documentElement.style.removeProperty('--mob-nav-h');
+    return;
+  }
+  const visible = [...nav.querySelectorAll('.mob-tab')].filter(t => getComputedStyle(t).display !== 'none').length || 1;
+  const per = window.innerWidth / visible;
+  nav.dataset.size = per < 46 ? 'xs' : per < 58 ? 'sm' : per >= 96 ? 'lg' : 'md';
+  nav.dataset.land = (window.innerHeight < 500 && window.innerWidth > window.innerHeight) ? '1' : '0';
+  requestAnimationFrame(() => {
+    document.documentElement.style.setProperty('--mob-nav-h', nav.offsetHeight + 'px');
   });
 }
+window.addEventListener('resize', fitMobileNav);
+window.addEventListener('orientationchange', () => setTimeout(fitMobileNav, 200));
 
 function clearSession() {
   _currentUser = null;
@@ -5670,6 +5734,7 @@ async function logout(silent) {
 function applyRole(role) {
   document.body.classList.remove('role-superadmin', 'role-admin', 'role-viewer');
   if (role) document.body.classList.add('role-' + role);
+  fitMobileNav(); // 「帳號」只有總管理員看得到，項目數變了要重算
 }
 
 function updateHeaderUser(user) {
@@ -6372,7 +6437,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '627ea2276988';
+const BUILD_ID = '006aacc57101';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
