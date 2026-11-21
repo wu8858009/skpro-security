@@ -1699,6 +1699,123 @@
   .blueprint-loc   { font-size: 12px; color: var(--accent-light); font-weight: 600; }
   .blueprint-actions { padding: 8px 14px 12px; display: flex; gap: 6px; border-top: 1px solid var(--border); }
   .blueprint-img-preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border); margin-top: 8px; display: none; }
+
+  /* ══════════════════════════════════════════════════════════════
+     手機版重新排版（body.mob-mode）
+     ══════════════════════════════════════════════════════════════ */
+  /* 頂部：一行放得下，名稱過長用…，使用者只顯示頭像，切換鈕只顯示圖示 */
+  body.mob-mode .header { height: 52px; padding: 0 10px; gap: 8px; }
+  body.mob-mode .header-brand { flex: 1; min-width: 0; gap: 8px; }
+  body.mob-mode .header-logo { width: 34px; height: 34px; font-size: 18px; flex-shrink: 0; }
+  body.mob-mode .header-title { min-width: 0; }
+  body.mob-mode .header-title h1 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.mob-mode .header-right { gap: 6px; flex-shrink: 0; }
+  body.mob-mode .header-user { padding: 0; background: none; border: 0; gap: 0; }
+  body.mob-mode .header-user > div:not(.header-user-avatar) { display: none; }
+  body.mob-mode .header-user-avatar { width: 30px; height: 30px; font-size: 13px; }
+  body.mob-mode .view-toggle-btn { padding: 6px 8px; font-size: 15px; line-height: 1; }
+  body.mob-mode .view-toggle-btn .vt-txt { display: none; }
+  body.mob-mode .logout-btn { white-space: nowrap; padding: 6px 9px; font-size: 12px; }
+
+  /* 內容區：左右留白一致、底部讓出導覽列 */
+  body.mob-mode .container { padding: 12px 12px 84px !important; }
+  body.mob-mode .page-title, body.mob-mode .section-header h2 { font-size: 18px; white-space: nowrap; }
+  body.mob-mode .section-header { margin-bottom: 12px; }
+  body.mob-mode .section-header > div { width: 100%; }
+  /* 動作按鈕排成一列，放不下就左右滑 */
+  body.mob-mode .section-actions {
+    display: flex; flex-wrap: nowrap; gap: 6px; width: 100%;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px;
+  }
+  body.mob-mode .section-actions::-webkit-scrollbar { display: none; }
+  body.mob-mode .section-actions .btn { flex-shrink: 0; white-space: nowrap; font-size: 13px; padding: 8px 12px; }
+
+  /* 搜尋＋篩選：搜尋一整列，篩選兩個一列 */
+  body.mob-mode .search-bar { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  body.mob-mode .search-bar > *:first-child { grid-column: 1 / -1; }
+  body.mob-mode .search-bar > .filter-select:last-child:nth-child(even) { grid-column: 1 / -1; }
+  body.mob-mode .filter-select { width: 100%; min-width: 0; padding: 9px 10px; }
+  /* 手機輸入框至少 16px，iPhone 點進去才不會自動放大畫面 */
+  body.mob-mode input.form-input, body.mob-mode select.form-input, body.mob-mode textarea.form-input,
+  body.mob-mode .search-input, body.mob-mode .filter-select, body.mob-mode .duty-input,
+  body.mob-mode .search-bar input, body.mob-mode .modal-body input, body.mob-mode .modal-body select,
+  body.mob-mode .modal-body textarea { font-size: 16px; }
+
+  /* 儀表板：統計卡三欄小卡 */
+  body.mob-mode .stats-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; margin-bottom: 12px; }
+  body.mob-mode .stat-card { flex-direction: column; align-items: flex-start; padding: 10px; gap: 6px; min-width: 0; }
+  body.mob-mode .stat-icon { width: 30px; height: 30px; font-size: 15px; border-radius: 8px; }
+  body.mob-mode .stat-info { min-width: 0; width: 100%; }
+  body.mob-mode .stat-info .label { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.mob-mode .stat-info .value { font-size: 22px; line-height: 1.2; }
+  /* 今日日期＋值班：上下排，輸入框整列 */
+  body.mob-mode .today-info-strip { flex-direction: column; margin-bottom: 12px; }
+  body.mob-mode .today-date-block { padding: 12px 14px 8px; border-right: 0; flex-direction: row; align-items: baseline; gap: 10px; }
+  body.mob-mode .today-date-block .date-main { font-size: 18px; letter-spacing: 0; }
+  body.mob-mode .today-date-block .date-sub { margin-top: 0; }
+  body.mob-mode .today-duty-block { padding: 0 14px 12px; flex-wrap: wrap; gap: 8px; }
+  body.mob-mode .duty-label { width: 100%; }
+  body.mob-mode .duty-input { flex: 1; min-width: 0; }
+  body.mob-mode .dashboard-grid { gap: 12px; }
+  body.mob-mode .dash-card { padding: 14px; }
+  body.mob-mode .annc-header { flex-wrap: wrap; }
+
+  /* 表格（卡號、鑰匙、店號、帳號）→ 一筆一張卡片，欄名在左、內容在右 */
+  body.mob-mode .table-wrap { overflow: visible; background: transparent; border: 0; box-shadow: none; }
+  body.mob-mode .data-table, body.mob-mode .data-table tbody { display: block; width: 100%; min-width: 0 !important; }
+  body.mob-mode .data-table thead { display: none; }
+  body.mob-mode .data-table tr {
+    display: block; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 10px; padding: 8px 14px;
+  }
+  body.mob-mode .data-table td {
+    display: flex !important; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 4px 6px;
+    padding: 6px 0 !important; border: 0 !important; font-size: 14px !important; text-align: right;
+    white-space: normal; word-break: break-word; background: none !important; max-width: none !important;
+  }
+  /* 欄名靠左（margin-right:auto 把內容全部推到右邊，內容有好幾段也會依序靠右） */
+  body.mob-mode .data-table td::before {
+    content: attr(data-label); flex-shrink: 0; text-align: left; margin-right: auto; padding-right: 10px;
+    color: var(--text-muted); font-size: 12px; font-weight: 600;
+  }
+  /* 桌面版為了塞進欄寬做的「…」截斷，手機卡片裡改成完整顯示 */
+  body.mob-mode .data-table td > * { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; }
+  /* 標題列：金色小條＋標題同一行，說明文字（帳號管理、設計圖頁才有）換到下一行 */
+  body.mob-mode .section-title { flex-wrap: wrap; row-gap: 4px; }
+  body.mob-mode .section-title p { width: 100%; font-size: 12px; margin: 0; }
+  body.mob-mode .data-table td.mob-empty { display: none !important; }
+  /* 第一欄（編號／建立者）當作卡片抬頭的小字 */
+  body.mob-mode .data-table td[data-label="#"] {
+    justify-content: flex-start; gap: 6px; font-size: 11px !important; color: var(--text-muted);
+    border-bottom: 1px solid var(--border) !important; padding-bottom: 8px !important; margin-bottom: 2px;
+  }
+  body.mob-mode .data-table td[data-label="#"]::before { content: none; }
+  body.mob-mode .data-table td[data-label="#"] br { display: none; }
+  /* 操作按鈕放在卡片底部、靠右、大一點好按 */
+  body.mob-mode .data-table td[data-label="操作"] {
+    justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border) !important;
+    margin-top: 4px; padding-top: 10px !important;
+  }
+  body.mob-mode .data-table td[data-label="操作"]::before { content: none; }
+  body.mob-mode .data-table td[data-label="操作"] .btn,
+  body.mob-mode .data-table td[data-label="操作"] button { min-width: 40px; min-height: 36px; }
+  /* 沒有資料時的提示列 */
+  body.mob-mode .data-table td[colspan] { justify-content: center; text-align: center; }
+  body.mob-mode .data-table td[colspan]::before { content: none; }
+
+  /* 新增聯絡人的浮動按鈕只在聯絡人頁出現 */
+  body.mob-mode:not([data-page="contacts"]) .mob-fab { display: none !important; }
+
+  /* 底部導覽列：7 個項目平均分、字小一點不擠 */
+  body.mob-mode .mob-nav { padding-bottom: env(safe-area-inset-bottom); }
+  body.mob-mode .mob-tab { min-width: 0; flex: 1; }
+
+  /* 設計圖：一欄大圖 */
+  body.mob-mode .blueprint-grid { grid-template-columns: 1fr; gap: 12px; }
+  body.mob-mode .blueprint-thumb, body.mob-mode .blueprint-thumb-empty, body.mob-mode .blueprint-thumb-doc { height: 190px; }
+
+  /* 店號聯絡人一覽：一欄 */
+  body.mob-mode .storeview-grid { grid-template-columns: 1fr; gap: 12px; }
 </style>
 </head>
 <body>
@@ -3145,6 +3262,7 @@ function switchPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
+  document.body.dataset.page = page; // 手機版樣式用（例如浮動「＋」只在聯絡人頁出現）
   document.querySelectorAll('.nav-tab').forEach(t => {
     if (t.getAttribute('onclick').includes(page)) t.classList.add('active');
   });
@@ -3805,7 +3923,8 @@ function applyViewMode(isMobile) {
   const btn = document.getElementById('viewToggleBtn');
   if (!btn) return;
   if (isMobile) {
-    btn.textContent = '🖥️ 電腦版';
+    // 手機版頂部空間小，只顯示圖示（文字用 .vt-txt 包起來，手機版樣式會藏起來）
+    btn.innerHTML = '<span class="vt-ico">🖥️</span><span class="vt-txt"> 電腦版</span>';
     btn.title = '切換到電腦版';
     btn.classList.add('mob-active');
   } else {
@@ -6227,7 +6346,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'fe8fef110689';
+const BUILD_ID = 'b0f8c34fbe97';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -6269,6 +6388,30 @@ async function checkForUpdate() {
     if (isBusyEditing()) showUpdateBar(); else applyUpdate();
   } catch {}
 }
+// ── 手機版表格變卡片 ──
+// 表格內容是各頁用程式畫出來的，畫完後替每一格補上欄名（data-label），手機版樣式用它顯示「欄名：內容」；
+// 內容是空的（—）就標記起來，手機版不顯示那一行，卡片才不會一堆空欄。
+function labelTablesForMobile() {
+  document.querySelectorAll('table.data-table').forEach(t => {
+    const heads = [...t.querySelectorAll('thead th')].map(th => th.textContent.replace(/\s+/g, ' ').trim());
+    t.querySelectorAll('tbody tr').forEach(tr => {
+      [...tr.children].forEach((td, i) => {
+        if (td.tagName !== 'TD' || td.hasAttribute('colspan')) return;
+        if (td.dataset.label !== heads[i]) td.dataset.label = heads[i] || '';
+        const txt = td.textContent.trim();
+        const empty = !td.querySelector('button, img, input, a, select') && (txt === '' || txt === '-' || txt === '—' || txt === '─');
+        td.classList.toggle('mob-empty', empty);
+      });
+    });
+  });
+}
+let _labelTablesQueued = false;
+new MutationObserver(() => {
+  if (_labelTablesQueued) return;
+  _labelTablesQueued = true;
+  requestAnimationFrame(() => { _labelTablesQueued = false; labelTablesForMobile(); });
+}).observe(document.body, { childList: true, subtree: true });
+
 // ── 多裝置自動同步（雲端版）──
 // 每 8 秒（畫面開著時）問一次雲端「資料版號」，跟自己畫面上的不一樣＝別台裝置改過資料 → 重抓全部資料並重畫。
 // 自己存檔時雲端回傳的新版號會直接記下來，所以自己改的不會重抓。
