@@ -3813,25 +3813,54 @@ function applyViewMode(isMobile) {
   if (pageId === 'contacts') renderContacts();
 }
 
+// 自動偵測裝置螢幕：
+//   ‧ 畫面寬度 ≤ 768（手機直放、視窗拉很窄）→ 手機版
+//   ‧ 觸控螢幕而且螢幕短邊 ≤ 500（手機橫放也算）→ 手機版
+//   ‧ 其他（電腦、平板）→ 電腦版
+// 視窗縮放、手機轉向時會重新判斷。
+// 手動按「手機版／電腦版」只在這次開啟有效（sessionStorage），下次開啟又回到自動偵測，
+// 才不會在某台裝置按過一次之後，換螢幕大小就再也不會自動切換。
+const VIEW_PREF_KEY = 'skpro_view_pref';
+try { localStorage.removeItem(VIEW_PREF_KEY); } catch {} // 舊版存在 localStorage 的永久設定，清掉改回自動
+
+function detectMobileScreen() {
+  const w = window.innerWidth;
+  const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const shortSide = Math.min(screen.width || w, screen.height || window.innerHeight);
+  return w <= 768 || (touch && shortSide <= 500);
+}
+
+function manualViewPref() {
+  try { return sessionStorage.getItem(VIEW_PREF_KEY); } catch { return null; }
+}
+
 function toggleViewMode() {
   const willBeMobile = !document.body.classList.contains('mob-mode');
-  localStorage.setItem('skpro_view_pref', willBeMobile ? 'mobile' : 'desktop');
+  try {
+    // 手動切到跟自動偵測一樣的結果，就等於回到自動
+    if (willBeMobile === detectMobileScreen()) sessionStorage.removeItem(VIEW_PREF_KEY);
+    else sessionStorage.setItem(VIEW_PREF_KEY, willBeMobile ? 'mobile' : 'desktop');
+  } catch {}
   applyViewMode(willBeMobile);
 }
 
 function initViewMode() {
-  const saved = localStorage.getItem('skpro_view_pref');
-  const autoMobile = window.innerWidth <= 640;
-  // 若有儲存偏好則套用，否則依螢幕寬度
-  const isMobile = saved === 'mobile' || (saved !== 'desktop' && autoMobile);
-  applyViewMode(isMobile);
+  const saved = manualViewPref();
+  applyViewMode(saved ? saved === 'mobile' : detectMobileScreen());
 }
 
-// 螢幕大小改變時自動重新評估（但尊重使用者的手動切換）
-window.addEventListener('resize', () => {
-  const saved = localStorage.getItem('skpro_view_pref');
-  if (!saved) applyViewMode(window.innerWidth <= 640);
-});
+// 螢幕大小改變、手機轉向時重新判斷（這次開啟有手動切換過就照手動的）
+let _viewResizeTimer = null;
+function onScreenChange() {
+  clearTimeout(_viewResizeTimer);
+  _viewResizeTimer = setTimeout(() => {
+    if (manualViewPref()) return;
+    const isMobile = detectMobileScreen();
+    if (isMobile !== document.body.classList.contains('mob-mode')) applyViewMode(isMobile);
+  }, 150);
+}
+window.addEventListener('resize', onScreenChange);
+window.addEventListener('orientationchange', onScreenChange);
 
 function migrateContactStoreNos() {
   const contacts = DB.get('contacts');
@@ -6182,7 +6211,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'd7a34078e128';
+const BUILD_ID = 'a2143484eb7f';
 let _newBuild = null;
 function isBusyEditing() {
   return !!document.querySelector('.modal-overlay.open, .lightbox.open');
