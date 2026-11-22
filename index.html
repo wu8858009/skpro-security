@@ -6037,6 +6037,12 @@ function openUserModal(id) {
   // 載入店號觀看清單
   renderStorePermList(storePerms);
   const editing = isNew ? null : DB.get('users').find(u => u.id === id);
+  // 自己是總管理員時不能改自己的角色（改成其他角色就再也進不了帳號管理）
+  const me = getCurrentUser();
+  const lockRole = !!(editing && me && editing.id === me.id && editing.role === 'superadmin');
+  const roleSel = document.getElementById('u_role');
+  roleSel.disabled = lockRole;
+  roleSel.title = lockRole ? '不能改自己的總管理員角色，請由另一位總管理員操作' : '';
   fillUserGroupSelect(editing ? editing.groupId : null);
   onUserGroupChange();
   onRoleChange(); // 根據角色灰掉整個區塊
@@ -6498,6 +6504,7 @@ function cloneUser(id) {
   document.getElementById('u_username').disabled = false;
   document.getElementById('u_displayName').value = '';
   document.getElementById('u_role').value = user.role;
+  document.getElementById('u_role').disabled = false;
   document.getElementById('u_password').value = '';
   document.getElementById('u_confirm').value = '';
   if (document.getElementById('u_expiresAt'))  document.getElementById('u_expiresAt').value  = user.expiresAt      || '';
@@ -6913,7 +6920,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '9d6791387ae0';
+const BUILD_ID = '29ad34eb58d9';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
