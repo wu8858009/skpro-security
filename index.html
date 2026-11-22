@@ -1950,6 +1950,10 @@
   <div class="sp-bar"><i></i></div>
   <div class="sp-status" id="splashStatus">系統啟動中…</div>
 </div>
+<script>
+  // 電腦版 exe 有自己的啟動畫面視窗，網頁就不再播一次
+  if (/SKPRODesktop/.test(navigator.userAgent)) document.getElementById('splash').style.display = 'none';
+</script>
 
 <!-- Login Overlay -->
 <div class="login-overlay" id="loginOverlay">
@@ -6534,7 +6538,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '74167da7d53f';
+const BUILD_ID = '58259f7a7c2d';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -6709,13 +6713,20 @@ if (BUILD_ID) {
 
 // ── 啟動動畫 ──
 const SPLASH_MIN_MS = 1600; // 動畫至少播完盾牌和打勾，不要一閃而過
+const IN_DESKTOP_SHELL = /SKPRODesktop/.test(navigator.userAgent);
+function postToDesktopShell(msg) {
+  try { window.chrome.webview.postMessage(msg); } catch {}
+}
 function setSplashStatus(text) {
   const el = document.getElementById('splashStatus');
   if (el) el.textContent = text;
+  if (IN_DESKTOP_SHELL) postToDesktopShell('status:' + text);
 }
 function hideSplash() {
+  if (IN_DESKTOP_SHELL) postToDesktopShell('ready'); // 電腦版：通知 exe 關掉它的啟動畫面
   const el = document.getElementById('splash');
   if (!el || el.classList.contains('hide')) return;
+  if (IN_DESKTOP_SHELL) { el.remove(); return; }
   setTimeout(() => {
     el.classList.add('hide');
     setTimeout(() => el.remove(), 600);
