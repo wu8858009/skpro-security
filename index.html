@@ -5022,6 +5022,7 @@ function saveStore() {
     hostId:       document.getElementById('s_hostId').value.trim(),
     address:      document.getElementById('s_address').value.trim(),
     area:         document.getElementById('s_area').value.trim(),
+    contactOrder: existingStore && Array.isArray(existingStore.contactOrder) ? existingStore.contactOrder : [],
     ...auditStore
   };
   if (editingStoreId) {
@@ -5048,16 +5049,39 @@ function editStore(id) {
 // ══════════════════════════════════════════
 //  STORE VIEW CONTACT ORDER
 // ══════════════════════════════════════════
+// 聯絡人順位存在雲端（跟著店號資料一起載入），所有裝置看到同一個順序；
+// 舊版存在各台瀏覽器裡的順序，雲端還沒有順序時先拿來顯示，管理員調整一次後就以雲端為準
 const SV_ORDER_KEY = 'skpro_sv_order';
 
 function getSvOrder(storeNo) {
+  const st = (_cache.stores || []).find(s => s.storeNo === storeNo);
+  if (st && Array.isArray(st.contactOrder) && st.contactOrder.length) return st.contactOrder;
   try { return JSON.parse(localStorage.getItem(SV_ORDER_KEY) || '{}')[storeNo] || []; } catch { return []; }
 }
-function setSvOrder(storeNo, ids) {
-  let all = {};
-  try { all = JSON.parse(localStorage.getItem(SV_ORDER_KEY) || '{}'); } catch {}
-  all[storeNo] = ids;
-  localStorage.setItem(SV_ORDER_KEY, JSON.stringify(all));
+async function setSvOrder(storeNo, ids) {
+  // 直接改快取裡這間店的順序（不經過一般的店號存檔，免得被當成修改店號資料）
+  ['stores', '_prev_stores'].forEach(k => (_cache[k] || []).forEach(s => { if (s.storeNo === storeNo) s.contactOrder = ids.slice(); }));
+  const st = (_cache.stores || []).find(s => s.storeNo === storeNo);
+  if (!st || !CLOUD_URL) return;
+  // 連按好幾下時一個一個送，而且送的是當下最新的順序，網路慢也不會被舊的順序蓋掉
+  _svOrderQueue = _svOrderQueue.then(() => saveSvOrderNow(storeNo, st.id));
+  return _svOrderQueue;
+}
+let _svOrderQueue = Promise.resolve();
+async function saveSvOrderNow(storeNo, storeId) {
+  const cur = (_cache.stores || []).find(s => s.id === storeId);
+  const ids = cur && Array.isArray(cur.contactOrder) ? cur.contactOrder : [];
+  try {
+    await apiJson(`/stores/${storeId}/contact-order`, { method: 'PUT', body: JSON.stringify({ contactIds: ids }) });
+    try {
+      const all = JSON.parse(localStorage.getItem(SV_ORDER_KEY) || '{}');
+      if (all[storeNo]) { delete all[storeNo]; localStorage.setItem(SV_ORDER_KEY, JSON.stringify(all)); }
+    } catch {}
+  } catch (e) { onSyncError(e); }
+}
+function canReorderSv() {
+  const u = getCurrentUser();
+  return !!u && (u.role === 'admin' || u.role === 'superadmin');
 }
 function sortByOrder(contacts, storeNo) {
   const order = getSvOrder(storeNo);
@@ -5137,7 +5161,7 @@ function renderStoreView() {
               <a href="tel:${c.mobile.replace(/-/g,'')}" style="color:${isInactive?'var(--text-muted)':'var(--accent-light)'};text-decoration:none">${c.mobile || '─'}</a>
             </td>
             <td style="width:52px;text-align:right">
-              ${!isInactive
+              ${!isInactive && canReorderSv()
                 ? `<button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},-1)" ${idx===0?'disabled':''} title="上移">▲</button>
                    <button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},1)" ${idx===active.length-1?'disabled':''} title="下移">▼</button>`
                 : ''}
@@ -5163,7 +5187,7 @@ function renderStoreView() {
       </div>
       ${infoRows ? `<div class="sv-info">${infoRows}</div>` : ''}
       <div class="sv-contacts">
-        <div class="sv-contacts-title">聯絡人順位 <span style="font-size:10px;color:var(--text-muted);font-weight:400">（▲▼ 調整順序）</span></div>
+        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span style="font-size:10px;color:var(--text-muted);font-weight:400">（▲▼ 調整順序，所有裝置同步）</span>' : ''}</div>
         <table class="sv-contacts-table">
           <thead><tr><th style="width:28px">#</th><th>姓名</th><th>職稱</th><th>手機</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
@@ -7032,7 +7056,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'c93b2bbccaaf';
+const BUILD_ID = '9412f4e47d77';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
