@@ -732,6 +732,11 @@
   .nav-tab.tab-perm-hidden { display: none !important; }
 
   /* ── System Settings Card ── */
+  .cont-hint { font-size: 12px; color: #81e6d9; background: rgba(56,178,172,0.10); border: 1px solid rgba(56,178,172,0.3);
+    border-radius: 6px; padding: 7px 10px; margin-bottom: 12px; }
+  .cont-checks { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 4px 0 14px; }
+  .cont-checks label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+  .cont-checks input { width: 15px; height: 15px; accent-color: var(--accent); }
   .sys-settings-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -2935,6 +2940,14 @@
       <button class="btn btn-primary btn-sm" onclick="saveModuleFieldSettings()">💾 儲存設定</button>
     </div>
 
+    <!-- 🔁 連續輸入（總管理員） -->
+    <div class="sys-settings-card role-superadmin" id="contEntryCard">
+      <h3>🔁 連續輸入</h3>
+      <p class="card-desc">勾選的項目在「新增」時按儲存不會關閉視窗，會清空表單讓你直接輸入下一筆（區域、所屬地點、類型這類常重複的欄位會保留），輸入完按「完成」。修改既有資料時照常關閉。設定套用到所有帳號、所有裝置。</p>
+      <div class="cont-checks" id="contEntryChecks"></div>
+      <button class="btn btn-primary btn-sm" onclick="saveContinuousSettings()">💾 儲存設定</button>
+    </div>
+
     <!-- 📋 登入紀錄（超管理員） -->
     <div class="login-log-section" id="loginLogSection">
       <div class="login-log-toggle" id="loginLogToggle" onclick="toggleLoginLog()">
@@ -3531,7 +3544,7 @@ function switchPage(page) {
   if (page === 'storeview') renderStoreView();
   if (page === 'dashboard') renderDashboard();
   if (page === 'blueprints') renderBlueprints();
-  if (page === 'users') { renderUsers(); renderFieldReqSettings(); loadSecurityPolicyUI(); }
+  if (page === 'users') { renderUsers(); renderFieldReqSettings(); renderContinuousSettings(); loadSecurityPolicyUI(); }
 }
 
 // ══════════════════════════════════════════
@@ -4273,6 +4286,62 @@ function updateZodiacDisplay(val) {
 // ══════════════════════════════════════════
 //  MODAL CONTROL
 // ══════════════════════════════════════════
+// ── 連續輸入 ──
+const CONTINUOUS_MODULES = [
+  { id: 'contact', label: '📞 緊急聯絡人' }, { id: 'card', label: '💳 保全卡號' }, { id: 'key', label: '🗝️ 鑰匙' },
+  { id: 'store', label: '🏪 客戶店號' }, { id: 'blueprint', label: '🗺️ 防護設計圖' },
+];
+function parseContinuous(v) {
+  try { const a = JSON.parse(v || '[]'); return Array.isArray(a) ? a.filter(x => CONTINUOUS_MODULES.some(m => m.id === x)) : []; } catch { return []; }
+}
+function isContinuous(module) { return (_cache.continuousEntry || []).includes(module); }
+
+// 新增視窗打開時：連續輸入模式顯示提示，「取消」改叫「完成」
+function markContinuous(modalId, module, isNew) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  const on = isNew && isContinuous(module);
+  let hint = modal.querySelector('.cont-hint');
+  if (on && !hint) {
+    hint = document.createElement('div');
+    hint.className = 'cont-hint';
+    hint.textContent = '🔁 連續輸入：按儲存後表單會清空，可以直接輸入下一筆；全部輸入完按「完成」。';
+    const body = modal.querySelector('.modal-body') || modal.querySelector('.modal-header').nextElementSibling;
+    body.insertBefore(hint, body.firstChild);
+  }
+  if (hint) hint.style.display = on ? '' : 'none';
+  const cancel = modal.querySelector('.modal-footer .btn:not(.btn-primary)');
+  if (cancel) {
+    if (!cancel.dataset.label) cancel.dataset.label = cancel.textContent;
+    cancel.textContent = on ? '✅ 完成' : cancel.dataset.label;
+  }
+}
+
+// 存好一筆後：重開空白表單，保留常重複的欄位，游標回到第一格
+function nextEntry(reopen, keepIds, focusId) {
+  const kept = keepIds.map(id => { const el = document.getElementById(id); return [id, el ? el.value : '']; });
+  reopen();
+  kept.forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+  setTimeout(() => { const el = document.getElementById(focusId); if (el) el.focus(); }, 60);
+}
+
+function renderContinuousSettings() {
+  const box = document.getElementById('contEntryChecks');
+  if (!box) return;
+  const on = _cache.continuousEntry || [];
+  box.innerHTML = CONTINUOUS_MODULES.map(m =>
+    `<label><input type="checkbox" value="${m.id}" ${on.includes(m.id) ? 'checked' : ''}> ${m.label}</label>`).join('');
+}
+
+async function saveContinuousSettings() {
+  const list = [...document.querySelectorAll('#contEntryChecks input:checked')].map(cb => cb.value);
+  try {
+    await apiJson('/appsettings/continuousEntry', { method: 'PUT', body: JSON.stringify({ value: JSON.stringify(list) }) });
+  } catch (e) { toast('儲存失敗：' + (e.message || ''), 'error'); return; }
+  _cache.continuousEntry = list;
+  toast(list.length ? '連續輸入已開啟：' + list.map(id => CONTINUOUS_MODULES.find(m => m.id === id).label).join('、') : '連續輸入已全部關閉', 'success');
+}
+
 function openModal(type, data) {
   if (type === 'contact') {
     editingContactId = data ? data.id : null;
@@ -4289,6 +4358,7 @@ function openModal(type, data) {
     setPhotoPreview(currentPhotoData);
     document.getElementById('c_photo_input').value = '';
     applyContactFieldRequirements();
+    markContinuous('modalContact', 'contact', !data);
     document.getElementById('modalContact').classList.add('open');
   } else if (type === 'card') {
     editingCardId = data ? data.id : null;
@@ -4302,6 +4372,7 @@ function openModal(type, data) {
     document.getElementById('k_expiry').value = data ? (data.expiry || '') : '';
     fillSiteSelect('k_site', data ? data.site : '');
     applyModuleFieldReq('card');
+    markContinuous('modalCard', 'card', !data);
     document.getElementById('modalCard').classList.add('open');
   } else if (type === 'store') {
     editingStoreId = data ? data.id : null;
@@ -4311,6 +4382,7 @@ function openModal(type, data) {
     });
     document.getElementById('storeAreaOptions').innerHTML = storeAreas().map(a => `<option value="${escHtml(a)}">`).join('');
     applyModuleFieldReq('store');
+    markContinuous('modalStore', 'store', !data);
     document.getElementById('modalStore').classList.add('open');
   } else if (type === 'key') {
     editingKeyId = data ? data.id : null;
@@ -4325,6 +4397,7 @@ function openModal(type, data) {
     document.getElementById('ky_return_time').value = data ? (data.returnTime || '') : '';
     fillSiteSelect('ky_site', data ? data.site : '');
     applyModuleFieldReq('key');
+    markContinuous('modalKey', 'key', !data);
     document.getElementById('modalKey').classList.add('open');
   }
 }
@@ -4487,12 +4560,19 @@ function saveContact() {
       if (idx >= 0) contacts[idx] = obj; else contacts.push(obj);
     } else { contacts.push(obj); }
     DB.set('contacts', contacts);
-    closeModal('contact');
+    const wasNew = !editingContactId;
+    const keepStores = [...storePickSelected];
     renderContacts();
     renderHistoricalContacts();
     populateDeptFilter();
     logActivity(editingContactId ? 'update' : 'create', 'contact', name);
-    toast(editingContactId ? '聯絡人資料已更新' : '聯絡人已新增', 'success');
+    if (wasNew && isContinuous('contact')) {
+      nextEntry(() => { openModal('contact'); renderStorePicker(keepStores); }, ['c_title', 'c_dept', 'c_level'], 'c_name');
+      toast(`聯絡人「${name}」已新增，請輸入下一筆`, 'success');
+    } else {
+      closeModal('contact');
+      toast(editingContactId ? '聯絡人資料已更新' : '聯絡人已新增', 'success');
+    }
   }
 }
 
@@ -4664,10 +4744,15 @@ function saveCard() {
     if (idx >= 0) data[idx] = obj;
   } else { data.push(obj); }
   DB.set('cards', data);
-  closeModal('card');
   renderCards();
   logActivity(editingCardId ? 'update' : 'create', 'card', `${holder} (${number})`);
-  toast(editingCardId ? '卡號資料已更新' : '卡號已新增', 'success');
+  if (!editingCardId && isContinuous('card')) {
+    nextEntry(() => openModal('card'), ['k_type', 'k_status', 'k_issued', 'k_expiry', 'k_areas', 'k_site'], 'k_holder');
+    toast(`卡號「${number}」已新增，請輸入下一筆`, 'success');
+  } else {
+    closeModal('card');
+    toast(editingCardId ? '卡號資料已更新' : '卡號已新增', 'success');
+  }
 }
 
 function saveKey() {
@@ -4703,10 +4788,15 @@ function saveKey() {
     if (idx >= 0) data[idx] = obj;
   } else { data.push(obj); }
   DB.set('keys', data);
-  closeModal('key');
   renderKeys();
   logActivity(editingKeyId ? 'update' : 'create', 'key', `${code} (${location})`);
-  toast(editingKeyId ? '鑰匙資料已更新' : '鑰匙紀錄已新增', 'success');
+  if (!editingKeyId && isContinuous('key')) {
+    nextEntry(() => openModal('key'), ['ky_location', 'ky_type', 'ky_site'], 'ky_code');
+    toast(`鑰匙「${code}」已新增，請輸入下一筆`, 'success');
+  } else {
+    closeModal('key');
+    toast(editingKeyId ? '鑰匙資料已更新' : '鑰匙紀錄已新增', 'success');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -4939,10 +5029,15 @@ function saveStore() {
     if (idx >= 0) data[idx] = obj;
   } else { data.push(obj); }
   DB.set('stores', data);
-  closeModal('store');
   renderStores();
   logActivity(editingStoreId ? 'update' : 'create', 'store', storeNo + (obj.storeName ? ` ${obj.storeName}` : ''));
-  toast(editingStoreId ? '店號資料已更新' : '店號已新增', 'success');
+  if (!editingStoreId && isContinuous('store')) {
+    nextEntry(() => openModal('store'), ['s_area'], 's_storeNo');
+    toast(`店號「${storeNo}」已新增，請輸入下一筆`, 'success');
+  } else {
+    closeModal('store');
+    toast(editingStoreId ? '店號資料已更新' : '店號已新增', 'success');
+  }
 }
 
 function editStore(id) {
@@ -5815,13 +5910,14 @@ async function loadAllData() {
   // 全部同時抓（雲端每個請求約 1 秒，一批一批等會讓開啟時多等好幾秒）。
   // 雲端資料版號跟資料一起抓：查版號很快，會比讀資料先完成，抓的途中有人改了，下一輪查版號就會發現不同而再抓一次
   const isAdmin = !!(_currentUser && (_currentUser.role === 'admin' || _currentUser.role === 'superadmin'));
-  const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users, groups] = await Promise.all([
+  const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users, groups, continuousEntry] = await Promise.all([
     CLOUD_URL ? apiJson('/sync').catch(() => null) : null,
     pageList('contacts', '/contacts'), pageList('cards', '/cards'), pageList('keys', '/keys'), apiJson('/stores'),
     apiJson('/announcements'), pageList('blueprints', '/blueprints'), apiJson('/systempolicy'),
     apiJson('/appsettings/duty').then(r => (r && r.value) || '').catch(() => ''),
     isAdmin ? apiJson('/users').catch(() => []) : [],
     isAdmin && CLOUD_URL ? apiJson('/groups').catch(() => []) : [],
+    apiJson('/appsettings/continuousEntry').then(r => parseContinuous(r && r.value)).catch(() => []),
   ]);
 
   const activeContacts = contacts.filter(c => c.status === 'active').map(c => fromApiEntity('contacts', c));
@@ -5841,6 +5937,7 @@ async function loadAllData() {
   _cache.duty = duty;
   _cache.users = users;
   _cache.groups = groups;
+  _cache.continuousEntry = continuousEntry;
   if (syncAt && syncAt.rev != null) _syncRev = syncAt.rev;
 }
 
@@ -6835,6 +6932,7 @@ function openBlueprintModal(id) {
     ['bp_title','bp_location','bp_area','bp_floor','bp_note'].forEach(function(fid){ document.getElementById(fid).value = ''; });
     fillSiteSelect('bp_site', '');
   }
+  markContinuous('blueprintModal', 'blueprint', !id);
   document.getElementById('blueprintModal').classList.add('open');
 }
 
@@ -6899,11 +6997,13 @@ async function saveBlueprint() {
     toast('設計圖已更新', 'success');
   } else {
     blueprints.push({ id: Date.now(), title, location, area, floor, note, site, imageData: null, fileType: null, fileName: null, ...fileFields, createdAt: now, updatedAt: now });
-    toast('設計圖已新增', 'success');
+    toast(isContinuous('blueprint') ? `設計圖「${title}」已新增，請輸入下一筆` : '設計圖已新增', 'success');
   }
+  const bpWasNew = !editingBlueprintId;
   DB.set('blueprints', blueprints);
-  closeModal('blueprintModal');
   renderBlueprints();
+  if (bpWasNew && isContinuous('blueprint')) nextEntry(() => openBlueprintModal(), ['bp_location', 'bp_area', 'bp_site'], 'bp_title');
+  else closeModal('blueprintModal');
 }
 
 function downloadBlueprint(id) {
@@ -6932,7 +7032,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'b83676205066';
+const BUILD_ID = 'aef70c62ff5f';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
