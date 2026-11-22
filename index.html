@@ -919,6 +919,25 @@
   .quick-list .meta { color: var(--text-muted); font-size: 12px; }
 
   /* ── Print ── */
+  /* 手機主畫面 App 不支援列印：把頁面排成白底版面再轉 PDF（只在產生 PDF 那一下存在，畫面外） */
+  .pdf-sheet { position: fixed; left: -20000px; top: 0; width: 1050px; padding: 28px 30px; background: #fff; color: #111;
+    --bg: #ffffff; --surface: #ffffff; --surface2: #f4f4f4; --border: #c8c8c8; --text: #111111; --text-muted: #555555;
+    --accent: #8a6400; --accent-light: #8a6400; --primary: #1a3a5c; --shadow: none; font-size: 13px; }
+  .pdf-sheet * { box-shadow: none !important; text-shadow: none !important; animation: none !important; transition: none !important; }
+  .pdf-sheet .btn, .pdf-sheet .search-bar, .pdf-sheet .section-actions, .pdf-sheet .sv-drag, .pdf-sheet .sv-move-btn,
+  .pdf-sheet .mob-fab, .pdf-sheet .cont-hint, .pdf-sheet input, .pdf-sheet select { display: none !important; }
+  .pdf-sheet .pdf-title { font-size: 20px; font-weight: 800; margin-bottom: 2px; color: #111; }
+  .pdf-sheet .pdf-date { font-size: 12px; color: #555; margin-bottom: 16px; }
+  .pdf-sheet .container { padding: 0 !important; max-width: none !important; }
+  .pdf-sheet .data-table th { background: #eeeeee !important; color: #000 !important; }
+  .pdf-sheet .data-table td { color: #000 !important; }
+  .pdf-sheet .table-wrap, .pdf-sheet .surface, .pdf-sheet .sv-card, .pdf-sheet .stat-card { background: #fff !important; border-color: #c8c8c8 !important; }
+  .pdf-sheet .storeview-grid { grid-template-columns: 1fr 1fr !important; }
+  .pdf-sheet .sv-contacts-title span { display: none !important; }
+  .pdf-sheet .area-tag, .pdf-sheet .site-tag { color: #0b5f58 !important; background: #e3f4f2 !important; border-color: #8fcac3 !important; }
+  .pdf-busy { position: fixed; inset: 0; z-index: 100001; background: rgba(7,15,28,0.88); color: #fff; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 15px; padding: 20px; text-align: center; }
+  .pdf-busy .btn { min-width: 220px; justify-content: center; }
   @media print {
     .header, .nav-tabs, .section-actions, .btn, .search-bar, .modal-overlay { display: none !important; }
     body { background: #fff; color: #000; }
@@ -4900,9 +4919,96 @@ function today() { return new Date().toISOString().split('T')[0]; }
 //  PRINT
 // ══════════════════════════════════════════
 function printPage(type) {
+  // iPhone／iPad 加到主畫面的 App 會忽略列印指令（按了沒反應）：改成產生 PDF，再用分享選單列印或傳送
+  if (isIOS() && isStandaloneApp()) { printPagePdf(type); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('print-target'));
   document.getElementById('page-' + type).classList.add('print-target');
   window.print();
+}
+
+const PDF_LIBS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+];
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const el = document.createElement('script');
+    el.src = src; el.onload = resolve; el.onerror = () => reject(new Error('載入 PDF 元件失敗，請確認網路'));
+    document.head.appendChild(el);
+  });
+}
+const PDF_PAGE_TITLES = { contacts: '緊急聯絡人', cards: '保全卡號管理', keys: '鑰匙管理', stores: '客戶店號資料', storeview: '店號聯絡人一覽' };
+
+function pdfBusy(html) {
+  let el = document.getElementById('pdfBusy');
+  if (!el) { el = document.createElement('div'); el.id = 'pdfBusy'; el.className = 'pdf-busy'; document.body.appendChild(el); }
+  el.innerHTML = html;
+  return el;
+}
+function closePdfBusy() { const el = document.getElementById('pdfBusy'); if (el) el.remove(); }
+
+async function printPagePdf(type) {
+  const title = PDF_PAGE_TITLES[type] || '資料';
+  pdfBusy('<div style="font-size:30px">📄</div><div>正在產生「' + escHtml(title) + '」PDF…</div>');
+  const wasMob = document.body.classList.contains('mob-mode');
+  let sheet = null;
+  try {
+    for (const src of PDF_LIBS) await loadScriptOnce(src);
+    const page = document.getElementById('page-' + type);
+    const now = new Date();
+    const stamp = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    sheet = document.createElement('div');
+    sheet.className = 'pdf-sheet';
+    sheet.innerHTML = `<div class="pdf-title">新光保全管理系統　${escHtml(title)}</div><div class="pdf-date">列印時間：${stamp}</div>` +
+      (page.querySelector('.container') || page).innerHTML;
+    sheet.querySelectorAll('.section-title h2').forEach(h => h.closest('.section-header') && h.closest('.section-header').remove());
+    // 暫時用電腦版排版（表格不要變成手機卡片），產生完立刻換回
+    if (wasMob) document.body.classList.remove('mob-mode');
+    document.body.appendChild(sheet);
+    await new Promise(r => setTimeout(r, 50));
+    const canvas = await window.html2canvas(sheet, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: 1110 });
+    sheet.remove(); sheet = null;
+    if (wasMob) { document.body.classList.add('mob-mode'); fitMobileNav(); }
+
+    // 切成 A4 直式一頁一頁
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = 210, pageH = 297, margin = 8;
+    const imgW = pageW - margin * 2;
+    const pxPerMm = canvas.width / imgW;
+    const sliceH = Math.floor((pageH - margin * 2) * pxPerMm);
+    for (let y = 0, n = 0; y < canvas.height; y += sliceH, n++) {
+      const part = document.createElement('canvas');
+      part.width = canvas.width; part.height = Math.min(sliceH, canvas.height - y);
+      part.getContext('2d').drawImage(canvas, 0, y, canvas.width, part.height, 0, 0, canvas.width, part.height);
+      if (n) pdf.addPage();
+      pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, part.height / pxPerMm);
+    }
+    const fileName = `新光保全_${title}_${stamp.slice(0, 10).replace(/\//g, '')}.pdf`;
+    const blob = pdf.output('blob');
+    const file = new File([blob], fileName, { type: 'application/pdf' });
+    const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+    // 分享要在使用者按按鈕的當下呼叫，所以產生好之後再請他按一次
+    pdfBusy('<div style="font-size:30px">✅</div><div>PDF 已產生</div>' +
+      '<button class="btn btn-primary" id="pdfShareBtn">' + (canShare ? '📤 分享／列印' : '📄 開啟 PDF') + '</button>' +
+      '<button class="btn btn-outline" onclick="closePdfBusy()">關閉</button>' +
+      '<div style="font-size:12px;color:#9ab">在分享選單選「列印」即可列印，也可以傳 LINE 或儲存到檔案</div>');
+    document.getElementById('pdfShareBtn').onclick = async () => {
+      if (canShare) {
+        try { await navigator.share({ files: [file], title: fileName }); closePdfBusy(); return; }
+        catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank') || (location.href = url);
+      closePdfBusy();
+    };
+  } catch (e) {
+    if (sheet) sheet.remove();
+    if (wasMob && !document.body.classList.contains('mob-mode')) { document.body.classList.add('mob-mode'); fitMobileNav(); }
+    closePdfBusy();
+    toast('產生 PDF 失敗：' + ((e && e.message) || '請稍後再試'), 'error');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -7122,7 +7228,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '12057fcb1292';
+const BUILD_ID = '955341832232';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
