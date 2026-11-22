@@ -5666,11 +5666,15 @@ function updateMainBadges() {
 // Fetches all module data from the API into the in-memory cache. Called right
 // after authentication succeeds, and again whenever another device changed data.
 async function loadAllData() {
-  // 先記下雲端資料版號再抓資料：抓的途中有人改了，下一輪查版號會發現不同而再抓一次
-  const syncAt = CLOUD_URL ? await apiJson('/sync').catch(() => null) : null;
-  const [contacts, cards, keys, stores, announcements, blueprints, policy] = await Promise.all([
+  // 全部同時抓（雲端每個請求約 1 秒，一批一批等會讓開啟時多等好幾秒）。
+  // 雲端資料版號跟資料一起抓：查版號很快，會比讀資料先完成，抓的途中有人改了，下一輪查版號就會發現不同而再抓一次
+  const isAdmin = !!(_currentUser && (_currentUser.role === 'admin' || _currentUser.role === 'superadmin'));
+  const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users] = await Promise.all([
+    CLOUD_URL ? apiJson('/sync').catch(() => null) : null,
     apiJson('/contacts'), apiJson('/cards'), apiJson('/keys'), apiJson('/stores'),
     apiJson('/announcements'), apiJson('/blueprints'), apiJson('/systempolicy'),
+    apiJson('/appsettings/duty').then(r => (r && r.value) || '').catch(() => ''),
+    isAdmin ? apiJson('/users').catch(() => []) : [],
   ]);
 
   const activeContacts = contacts.filter(c => c.status === 'active').map(c => fromApiEntity('contacts', c));
@@ -5687,13 +5691,8 @@ async function loadAllData() {
   _cache.blueprints = blueprints.map(b => fromApiEntity('blueprints', b)); _cache['_prev_blueprints'] = _cache.blueprints;
   _cache.systemPolicy = policy;
   resolveCloudFiles();
-  try { _cache.duty = (await apiJson('/appsettings/duty')).value || ''; } catch { _cache.duty = ''; }
-
-  if (_currentUser && (_currentUser.role === 'admin' || _currentUser.role === 'superadmin')) {
-    try { _cache.users = await apiJson('/users'); } catch { _cache.users = []; }
-  } else {
-    _cache.users = [];
-  }
+  _cache.duty = duty;
+  _cache.users = users;
   if (syncAt && syncAt.rev != null) _syncRev = syncAt.rev;
 }
 
@@ -6538,7 +6537,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '58259f7a7c2d';
+const BUILD_ID = '20aa55c4f646';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
