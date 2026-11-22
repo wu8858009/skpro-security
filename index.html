@@ -1086,7 +1086,7 @@
   .sv-move-btn:hover { border-color: var(--accent); color: var(--accent-light); }
   .sv-move-btn:disabled { opacity: 0.25; cursor: default; }
   /* 拖曳排序：按住 ☰ 上下拖（手機用手指、電腦用滑鼠） */
-  .sv-drag { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 24px; margin-right: 4px;
+  .sv-drag { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 26px;
     border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 13px; cursor: grab;
     touch-action: none; user-select: none; -webkit-user-select: none; vertical-align: middle; }
   .sv-drag:hover { border-color: var(--accent); color: var(--accent-light); }
@@ -5229,10 +5229,9 @@ function renderStoreView() {
             <td style="font-family:monospace;font-size:11px">
               <a href="tel:${c.mobile.replace(/-/g,'')}" style="color:${isInactive?'var(--text-muted)':'var(--accent-light)'};text-decoration:none">${c.mobile || '─'}</a>
             </td>
-            <td style="width:92px;text-align:right;white-space:nowrap">
+            <td style="width:48px;text-align:right;white-space:nowrap">
               ${!isInactive && canReorderSv()
-                ? `<span class="sv-drag" title="按住拖曳調整順序">☰</span><button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},-1)" ${idx===0?'disabled':''} title="上移">▲</button>
-                   <button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},1)" ${idx===active.length-1?'disabled':''} title="下移">▼</button>`
+                ? `<span class="sv-drag" title="按住拖曳調整順序">☰</span>`
                 : ''}
             </td>
           </tr>`;
@@ -5256,7 +5255,7 @@ function renderStoreView() {
       </div>
       ${infoRows ? `<div class="sv-info">${infoRows}</div>` : ''}
       <div class="sv-contacts">
-        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span style="font-size:10px;color:var(--text-muted);font-weight:400">（按住 ☰ 拖曳或按 ▲▼ 調整，所有裝置同步）</span>' : ''}</div>
+        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span style="font-size:10px;color:var(--text-muted);font-weight:400">（按住 ☰ 上下拖曳調整，所有裝置同步）</span>' : ''}</div>
         <table class="sv-contacts-table">
           <thead><tr><th style="width:28px">#</th><th>姓名</th><th>職稱</th><th>手機</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
@@ -7126,7 +7125,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '99001376db5e';
+const BUILD_ID = 'f880d1038a8e';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
