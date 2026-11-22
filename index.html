@@ -712,6 +712,22 @@
     font-style: italic;
   }
 
+  /* ── 權限群組 ── */
+  .perm-groups-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; }
+  .perm-groups-card .pg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .perm-groups-card h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+  .perm-groups-card .card-desc { font-size: 12px; color: var(--text-muted); margin: 0; }
+  .pg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .pg-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .pg-item-top { display: flex; align-items: center; gap: 8px; }
+  .pg-item-name { font-weight: 700; font-size: 14px; color: var(--accent-light); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pg-item-desc { font-size: 12px; color: var(--text-muted); }
+  .pg-item-row { font-size: 11px; color: var(--text-muted); line-height: 1.7; }
+  .pg-item-row b { color: var(--text); font-weight: 600; margin-right: 4px; }
+  .pg-empty { font-size: 13px; color: var(--text-muted); padding: 10px 2px; }
+  .page-tag.group-tag { background: rgba(66,153,225,0.15); color: #90cdf4; border-color: rgba(66,153,225,0.35); }
+  .perm-locked-hint { font-size: 12px; color: #90cdf4; background: rgba(66,153,225,0.1); border: 1px solid rgba(66,153,225,0.25); border-radius: 6px; padding: 6px 10px; margin: 6px 0; }
+
   /* ── Hidden tab by permission ── */
   .nav-tab.tab-perm-hidden { display: none !important; }
 
@@ -2801,6 +2817,17 @@
         <button class="btn btn-primary" onclick="openUserModal()">＋ 新增帳號</button>
       </div>
     </div>
+    <!-- 🧩 權限群組 -->
+    <div class="perm-groups-card" id="permGroupsCard">
+      <div class="pg-head">
+        <div>
+          <h3>🧩 權限群組</h3>
+          <p class="card-desc">先建好幾種權限範本（能看的頁面＋能看的店號），帳號選一個群組就套用；修改群組，所有套用的帳號一起改。</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openGroupModal()">＋ 新增群組</button>
+      </div>
+      <div class="pg-grid" id="groupsGrid"></div>
+    </div>
     <div class="table-wrap">
       <table class="data-table">
         <thead>
@@ -2964,6 +2991,43 @@
     </div>
   </div>
 </div>
+<!-- ══════════ 權限群組 MODAL ══════════ -->
+<div class="modal-overlay" id="groupModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h3>🧩 <span id="groupModalTitle">新增權限群組</span></h3>
+      <button class="modal-close" onclick="closeModal('groupModal')">✕</button>
+    </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">群組名稱 *</label>
+        <input class="form-input" type="text" id="g_name" maxlength="30" placeholder="例如：店長、巡邏員、內勤">
+      </div>
+      <div class="form-group">
+        <label class="form-label">說明</label>
+        <input class="form-input" type="text" id="g_desc" maxlength="100" placeholder="這個群組給誰用（可留空）">
+      </div>
+      <div class="form-group">
+        <label class="form-label">可見頁籤 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（勾選即開放）</span></label>
+        <div class="pages-checklist" id="g_pages_checklist"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">可觀看店號 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（全部勾選或全部不勾 = 全部開放）</span></label>
+        <div class="store-perm-wrap">
+          <div class="store-perm-toolbar">
+            <button type="button" class="btn btn-sm btn-outline" onclick="storePermSelectAll(true, 'g_store_perm_list')" style="font-size:11px;padding:2px 8px;">全選</button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="storePermSelectAll(false, 'g_store_perm_list')" style="font-size:11px;padding:2px 8px;">全不選</button>
+          </div>
+          <div class="store-perm-list" id="g_store_perm_list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('groupModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveGroup()">儲存</button>
+    </div>
+  </div>
+</div>
 <!-- ══════════ USER MANAGEMENT MODAL ══════════ -->
 <div class="modal-overlay" id="userModal">
   <div class="modal" style="max-width:440px">
@@ -2987,6 +3051,13 @@
           <option value="admin">管理員 — 可新增/編輯</option>
           <option value="superadmin">總管理員 — 完整權限</option>
         </select>
+      </div>
+      <div class="form-group" id="u_group_group">
+        <label class="form-label">🧩 權限群組
+          <span style="font-weight:400;color:var(--text-muted);font-size:11px">（選了群組，可見頁籤和店號就照群組設定）</span>
+        </label>
+        <select class="form-select" id="u_groupId" onchange="onUserGroupChange()"></select>
+        <div class="perm-locked-hint" id="u_group_hint" style="display:none"></div>
       </div>
       <div class="form-group" id="u_pages_group">
         <label class="form-label">可見頁籤
@@ -3216,7 +3287,9 @@ async function apiJson(path, options) {
   if (!res.ok) {
     let msg = res.statusText;
     try { const j = await res.json(); msg = j.error || j.title || msg; } catch {}
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
   }
   if (res.status === 204) return null;
   return res.json();
@@ -5665,16 +5738,27 @@ function updateMainBadges() {
 
 // Fetches all module data from the API into the in-memory cache. Called right
 // after authentication succeeds, and again whenever another device changed data.
+// 帳號看不到的頁面不抓（雲端會回「沒有權限」）；權限剛被改掉、還是被擋時也當成沒有資料，不要讓整個畫面載不起來
+function canSeePage(page) {
+  const u = _currentUser;
+  return !u || u.role === 'superadmin' || !u.allowedPages || !u.allowedPages.length || u.allowedPages.includes(page);
+}
+function pageList(page, path) {
+  if (!canSeePage(page)) return Promise.resolve([]);
+  return apiJson(path).catch(e => { if (e.status === 403) return []; throw e; });
+}
+
 async function loadAllData() {
   // 全部同時抓（雲端每個請求約 1 秒，一批一批等會讓開啟時多等好幾秒）。
   // 雲端資料版號跟資料一起抓：查版號很快，會比讀資料先完成，抓的途中有人改了，下一輪查版號就會發現不同而再抓一次
   const isAdmin = !!(_currentUser && (_currentUser.role === 'admin' || _currentUser.role === 'superadmin'));
-  const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users] = await Promise.all([
+  const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users, groups] = await Promise.all([
     CLOUD_URL ? apiJson('/sync').catch(() => null) : null,
-    apiJson('/contacts'), apiJson('/cards'), apiJson('/keys'), apiJson('/stores'),
-    apiJson('/announcements'), apiJson('/blueprints'), apiJson('/systempolicy'),
+    pageList('contacts', '/contacts'), pageList('cards', '/cards'), pageList('keys', '/keys'), apiJson('/stores'),
+    apiJson('/announcements'), pageList('blueprints', '/blueprints'), apiJson('/systempolicy'),
     apiJson('/appsettings/duty').then(r => (r && r.value) || '').catch(() => ''),
     isAdmin ? apiJson('/users').catch(() => []) : [],
+    isAdmin && CLOUD_URL ? apiJson('/groups').catch(() => []) : [],
   ]);
 
   const activeContacts = contacts.filter(c => c.status === 'active').map(c => fromApiEntity('contacts', c));
@@ -5693,6 +5777,7 @@ async function loadAllData() {
   resolveCloudFiles();
   _cache.duty = duty;
   _cache.users = users;
+  _cache.groups = groups;
   if (syncAt && syncAt.rev != null) _syncRev = syncAt.rev;
 }
 
@@ -5897,40 +5982,27 @@ function openUserModal(id) {
   }
 
   // 設定頁籤勾選狀態：null = 全選；有陣列 = 按陣列勾選
-  document.querySelectorAll('#u_pages_checklist input[type=checkbox]').forEach(cb => {
-    if (cb.disabled) return; // dashboard 固定勾選
-    cb.checked = !userAllowedPages || userAllowedPages.includes(cb.value);
-  });
+  renderPagesChecklist('u_pages_checklist', userAllowedPages);
   // 載入店號觀看清單
   renderStorePermList(storePerms);
+  const editing = isNew ? null : DB.get('users').find(u => u.id === id);
+  fillUserGroupSelect(editing ? editing.groupId : null);
+  onUserGroupChange();
   onRoleChange(); // 根據角色灰掉整個區塊
   document.getElementById('userModal').classList.add('open');
 }
 
 // 選角色為 superadmin 時，頁籤區灰掉（不受限）
 function onRoleChange() {
-  const role = document.getElementById('u_role').value;
-  const group = document.getElementById('u_pages_group');
-  const storeGroup = document.getElementById('u_storeview_group');
-  const isSuperadmin = role === 'superadmin';
-  // 頁籤群組
-  group.style.opacity = isSuperadmin ? '0.45' : '1';
-  group.style.pointerEvents = isSuperadmin ? 'none' : '';
-  if (isSuperadmin) {
-    document.querySelectorAll('#u_pages_checklist input[type=checkbox]').forEach(cb => {
-      if (!cb.disabled) cb.checked = true;
-    });
+  if (document.getElementById('u_role').value === 'superadmin') {
+    document.querySelectorAll('#u_pages_checklist input[type=checkbox]').forEach(cb => { cb.checked = true; });
   }
-  // 店號觀看群組
-  if (storeGroup) {
-    storeGroup.style.opacity = isSuperadmin ? '0.45' : '1';
-    storeGroup.style.pointerEvents = isSuperadmin ? 'none' : '';
-  }
+  updatePermSectionsState();
 }
 
 // ── 店號觀看清單輔助 ──
-function renderStorePermList(allowedStoreNos) {
-  const list = document.getElementById('u_store_perm_list');
+function renderStorePermList(allowedStoreNos, listId) {
+  const list = document.getElementById(listId || 'u_store_perm_list');
   if (!list) return;
   const stores = DB.get('stores').slice().sort((a, b) => a.storeNo.localeCompare(b.storeNo));
   if (!stores.length) { list.innerHTML = '<span style="color:var(--text-muted);font-size:12px;padding:6px">尚無店號資料</span>'; return; }
@@ -5946,8 +6018,178 @@ function renderStorePermList(allowedStoreNos) {
   }).join('');
 }
 
-function storePermSelectAll(checked) {
-  document.querySelectorAll('#u_store_perm_list input[type=checkbox]').forEach(cb => { cb.checked = checked; });
+function storePermSelectAll(checked, listId) {
+  document.querySelectorAll('#' + (listId || 'u_store_perm_list') + ' input[type=checkbox]').forEach(cb => { cb.checked = checked; });
+}
+
+// 勾選框 → 權限清單（全部勾＝不限制＝null）
+function readPagesChecklist(containerId) {
+  const checked = [...document.querySelectorAll('#' + containerId + ' input[type=checkbox]:checked')].map(cb => cb.value);
+  return checked.length < ALL_PAGES.length ? checked : null;
+}
+function readStorePermList(listId) {
+  const all = [...document.querySelectorAll('#' + listId + ' input[type=checkbox]')];
+  const nos = all.filter(cb => cb.checked).map(cb => cb.value);
+  return nos.length > 0 && nos.length < all.length ? nos : null;
+}
+
+function renderPagesChecklist(containerId, allowed) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = ALL_PAGES.map(p => {
+    const locked = p.id === 'dashboard';
+    const checked = locked || !allowed || !allowed.length || allowed.includes(p.id);
+    return `<label${locked ? ' class="locked"' : ''}><input type="checkbox" value="${p.id}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}> ${p.label}</label>`;
+  }).join('');
+}
+
+// ── 權限群組 ──
+function escHtml(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+function getGroups() { return DB.get('groups'); }
+function findGroup(id) { return id ? getGroups().find(g => g.id === id) || null : null; }
+
+function pagesTags(pages) {
+  if (!pages || !pages.length) return '<span class="page-tag-all">全部開放</span>';
+  return pages.map(pid => { const pg = ALL_PAGES.find(p => p.id === pid); return pg ? `<span class="page-tag">${pg.label}</span>` : ''; }).join('');
+}
+function storesSummary(nos) {
+  if (!nos || !nos.length) return '<span class="page-tag-all">全部店號</span>';
+  const stores = DB.get('stores');
+  const names = nos.map(no => { const st = stores.find(x => x.storeNo === no); return st && st.storeName ? `${no} ${st.storeName}` : no; });
+  const shown = names.slice(0, 4).map(n => `<span class="page-tag">${escHtml(n)}</span>`).join('');
+  return shown + (names.length > 4 ? `<span class="page-tag-all"> 等 ${names.length} 家</span>` : '');
+}
+
+function renderGroups() {
+  const grid = document.getElementById('groupsGrid');
+  const card = document.getElementById('permGroupsCard');
+  if (!grid || !card) return;
+  card.style.display = CLOUD_URL ? '' : 'none';
+  const groups = getGroups();
+  if (!groups.length) {
+    grid.innerHTML = '<div class="pg-empty">還沒有權限群組。按「＋ 新增群組」建立，例如「店長」只看自己的店、「巡邏員」只看聯絡人和鑰匙。</div>';
+    return;
+  }
+  grid.innerHTML = groups.map(g => `
+    <div class="pg-item">
+      <div class="pg-item-top">
+        <span class="pg-item-name" title="${escHtml(g.name)}">🧩 ${escHtml(g.name)}</span>
+        <button class="btn btn-sm" onclick="openGroupModal(${g.id})" title="編輯">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})" title="刪除">🗑️</button>
+      </div>
+      ${g.description ? `<div class="pg-item-desc">${escHtml(g.description)}</div>` : ''}
+      <div class="pg-item-row"><b>頁籤</b>${pagesTags(g.allowedPages)}</div>
+      <div class="pg-item-row"><b>店號</b>${storesSummary(g.allowedStoreNos)}</div>
+      <div class="pg-item-row"><b>套用帳號（${g.memberCount}）</b>${g.members.length ? g.members.map(escHtml).join('、') : '—'}</div>
+    </div>`).join('');
+}
+
+let editingGroupId = null;
+function openGroupModal(id) {
+  editingGroupId = id || null;
+  const g = findGroup(editingGroupId);
+  document.getElementById('groupModalTitle').textContent = g ? '編輯權限群組' : '新增權限群組';
+  document.getElementById('g_name').value = g ? g.name : '';
+  document.getElementById('g_desc').value = g ? (g.description || '') : '';
+  renderPagesChecklist('g_pages_checklist', g ? g.allowedPages : null);
+  renderStorePermList(g ? g.allowedStoreNos : null, 'g_store_perm_list');
+  document.getElementById('groupModal').classList.add('open');
+}
+
+async function reloadUsersAndGroups() {
+  const [users, groups] = await Promise.all([apiJson('/users'), apiJson('/groups')]);
+  _cache.users = users;
+  _cache.groups = groups;
+}
+
+async function saveGroup() {
+  const name = document.getElementById('g_name').value.trim();
+  if (!name) { toast('請填寫群組名稱', 'error'); return; }
+  const wasEditing = !!editingGroupId;
+  const body = JSON.stringify({
+    name, description: document.getElementById('g_desc').value.trim(),
+    allowedPages: readPagesChecklist('g_pages_checklist'),
+    allowedStoreNos: readStorePermList('g_store_perm_list'),
+  });
+  try {
+    if (wasEditing) await apiJson(`/groups/${editingGroupId}`, { method: 'PUT', body });
+    else await apiJson('/groups', { method: 'POST', body });
+    await reloadUsersAndGroups();
+  } catch (e) { toast(e.message || '儲存失敗', 'error'); return; }
+  closeModal('groupModal');
+  renderUsers();
+  await refreshOwnPermissions();
+  toast(wasEditing ? '權限群組已更新，套用的帳號已一起改' : '權限群組已建立', 'success');
+}
+
+async function deleteGroup(id) {
+  const g = findGroup(id);
+  if (!g) return;
+  const msg = g.memberCount
+    ? `確定要刪除權限群組「${g.name}」？\n\n有 ${g.memberCount} 個帳號正在使用，刪除後這些帳號會保留目前的權限，改成個別設定。`
+    : `確定要刪除權限群組「${g.name}」？`;
+  if (!confirm(msg)) return;
+  try {
+    await apiJson(`/groups/${id}`, { method: 'DELETE' });
+    await reloadUsersAndGroups();
+  } catch (e) { toast(e.message || '刪除失敗', 'error'); return; }
+  renderUsers();
+  toast('權限群組已刪除', 'success');
+}
+
+// 自己的權限可能被別人（或自己）透過群組改了：重新拿一次並套用；目前這頁不能看了就回總覽
+async function refreshOwnPermissions() {
+  if (!CLOUD_URL || !_currentUser) return;
+  let me;
+  try { me = await apiJson('/auth/me'); } catch { return; }
+  if (!me) return;
+  setSession(me);
+  applyRole(me.role);
+  applyPagePermissions(me);
+  updateHeaderUser(me);
+  const active = document.querySelector('.page.active');
+  const page = active ? active.id.replace('page-', '') : 'dashboard';
+  if (me.role !== 'superadmin' && me.allowedPages && me.allowedPages.length && page !== 'users' && !me.allowedPages.includes(page)) {
+    switchPage('dashboard');
+  }
+}
+
+// 帳號視窗：群組選單
+function fillUserGroupSelect(groupId) {
+  const sel = document.getElementById('u_groupId');
+  sel.innerHTML = '<option value="">不套用群組（個別設定）</option>' +
+    getGroups().map(g => `<option value="${g.id}">🧩 ${escHtml(g.name)}</option>`).join('');
+  sel.value = groupId && findGroup(groupId) ? String(groupId) : '';
+}
+
+function onUserGroupChange() {
+  const g = findGroup(+document.getElementById('u_groupId').value);
+  if (g) {
+    renderPagesChecklist('u_pages_checklist', g.allowedPages);
+    renderStorePermList(g.allowedStoreNos, 'u_store_perm_list');
+  }
+  updatePermSectionsState();
+}
+
+// 總管理員不受限、或套用了群組 → 頁籤和店號區灰掉不能改
+function updatePermSectionsState() {
+  const isSuper = document.getElementById('u_role').value === 'superadmin';
+  const g = isSuper ? null : findGroup(+document.getElementById('u_groupId').value);
+  const lock = isSuper || !!g;
+  ['u_pages_group', 'u_storeview_group'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.opacity = lock ? '0.55' : '1';
+    el.style.pointerEvents = lock ? 'none' : '';
+  });
+  const groupWrap = document.getElementById('u_group_group');
+  if (groupWrap) groupWrap.style.display = !CLOUD_URL || isSuper ? 'none' : '';
+  const hint = document.getElementById('u_group_hint');
+  if (hint) {
+    hint.style.display = g ? '' : 'none';
+    hint.textContent = g ? `依權限群組「${g.name}」設定，下方頁籤和店號不能個別改。要修改請編輯該群組，或改成「不套用群組」。` : '';
+  }
 }
 
 async function saveUser() {
@@ -5974,23 +6216,11 @@ async function saveUser() {
     if (!ok) { toast(`密碼不符合政策：${msg}`, 'error'); return; }
   }
 
-  // 讀取頁籤勾選（superadmin 不限制，存 null）
-  let allowedPages = null;
-  if (role !== 'superadmin') {
-    const checked = [...document.querySelectorAll('#u_pages_checklist input[type=checkbox]:checked')]
-      .map(cb => cb.value);
-    if (checked.length < ALL_PAGES.length) allowedPages = checked;
-  }
-
-  // 讀取店號觀看清單（superadmin 不限制，存 null；全選 = null；部分勾選 = 陣列）
-  let allowedStoreNos = null;
-  if (role !== 'superadmin') {
-    const allStoreCbs  = [...document.querySelectorAll('#u_store_perm_list input[type=checkbox]')];
-    const checkedNos   = allStoreCbs.filter(cb => cb.checked).map(cb => cb.value);
-    if (checkedNos.length > 0 && checkedNos.length < allStoreCbs.length) {
-      allowedStoreNos = checkedNos; // 部分勾選才有限制
-    }
-  }
+  // 讀取頁籤勾選、店號觀看清單（superadmin 不限制，存 null；全選 = null；部分勾選 = 陣列）
+  const allowedPages = role !== 'superadmin' ? readPagesChecklist('u_pages_checklist') : null;
+  const allowedStoreNos = role !== 'superadmin' ? readStorePermList('u_store_perm_list') : null;
+  // 權限群組（總管理員不套用）
+  const groupId = role !== 'superadmin' && CLOUD_URL ? (+document.getElementById('u_groupId').value || null) : null;
 
   const currentUser = getCurrentUser();
 
@@ -5999,7 +6229,7 @@ async function saveUser() {
       await apiJson('/users', {
         method: 'POST',
         body: JSON.stringify({
-          username, password, displayName, role, allowedPages, allowedStoreNos,
+          username, password, displayName, role, allowedPages, allowedStoreNos, groupId,
           expiresAt: expiresAt || null, loginTimeStart: timeStart || null, loginTimeEnd: timeEnd || null,
         }),
       });
@@ -6007,22 +6237,25 @@ async function saveUser() {
       const updated = await apiJson(`/users/${editingUserId}`, {
         method: 'PUT',
         body: JSON.stringify({
-          displayName, role, allowedPages, allowedStoreNos,
+          displayName, role, allowedPages, allowedStoreNos, groupId,
           expiresAt: expiresAt || null, loginTimeStart: timeStart || null, loginTimeEnd: timeEnd || null,
         }),
       });
       if (password) await apiJson(`/users/${editingUserId}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword: password }) });
 
       if (currentUser && currentUser.id === editingUserId) {
-        setSession({ ...currentUser, displayName: updated.displayName, role: updated.role, allowedPages: updated.allowedPages, allowedStoreNos: updated.allowedStoreNos });
-        applyRole(updated.role);
-        applyPagePermissions(updated);
-        updateHeaderUser(updated);
+        if (CLOUD_URL) await refreshOwnPermissions(); // 套用群組時，實際權限以雲端算出來的為準
+        else {
+          setSession({ ...currentUser, displayName: updated.displayName, role: updated.role, allowedPages: updated.allowedPages, allowedStoreNos: updated.allowedStoreNos });
+          applyRole(updated.role);
+          applyPagePermissions(updated);
+          updateHeaderUser(updated);
+        }
       }
     }
   } catch (e) { toast(e.message || '儲存失敗', 'error'); return; }
 
-  _cache.users = await apiJson('/users');
+  if (CLOUD_URL) await reloadUsersAndGroups(); else _cache.users = await apiJson('/users');
   closeModal('userModal');
   renderUsers();
   toast(isNew ? '帳號建立成功' : '帳號更新成功', 'success');
@@ -6132,11 +6365,10 @@ function cloneUser(id) {
   if (document.getElementById('u_expiresAt'))  document.getElementById('u_expiresAt').value  = user.expiresAt      || '';
   if (document.getElementById('u_timeStart'))  document.getElementById('u_timeStart').value  = user.loginTimeStart || '';
   if (document.getElementById('u_timeEnd'))    document.getElementById('u_timeEnd').value    = user.loginTimeEnd   || '';
-  const userAllowedPages = user.allowedPages || null;
-  document.querySelectorAll('#u_pages_checklist input[type=checkbox]').forEach(cb => {
-    if (cb.disabled) return;
-    cb.checked = !userAllowedPages || userAllowedPages.includes(cb.value);
-  });
+  renderPagesChecklist('u_pages_checklist', user.allowedPages || null);
+  renderStorePermList(user.allowedStoreNos || null);
+  fillUserGroupSelect(user.groupId);
+  onUserGroupChange();
   // Reset strength bar
   const sbar = document.getElementById('userPwdStrengthBar');
   const shint = document.getElementById('userPwdHint');
@@ -6241,6 +6473,7 @@ function validateModuleFields(module, valueMap) {
 
 function renderUsers() {
   updatePendingBadge();
+  renderGroups();
   const users = DB.get('users');
   const currentUser = getCurrentUser();
   const tbody = document.getElementById('usersBody');
@@ -6298,7 +6531,10 @@ function renderUsers() {
                  <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})" title="刪除">🗑️</button>`;
     }
 
-    // ── 可見頁籤欄 ──
+    // ── 可見頁籤欄（套用群組的帳號顯示群組名稱＋群組的設定）──
+    const ug = u.role !== 'superadmin' ? findGroup(u.groupId) : null;
+    if (ug) u = { ...u, allowedPages: ug.allowedPages, allowedStoreNos: ug.allowedStoreNos };
+    const groupTag = ug ? `<span class="page-tag group-tag">🧩 ${escHtml(ug.name)}</span><br>` : '';
     let pagesCell;
     if (u.role === 'superadmin') {
       pagesCell = '<span class="page-tag-all">不限制</span>';
@@ -6347,7 +6583,7 @@ function renderUsers() {
       <td>${u.displayName}</td>
       <td><span class="role-badge ${u.role}">${ROLE_LABELS[u.role] || u.role}</span></td>
       <td>${statusCell}</td>
-      <td style="line-height:1.8">${pagesCell}</td>
+      <td style="line-height:1.8">${groupTag}${pagesCell}</td>
       <td style="line-height:1.8">${storeCell}</td>
       <td>${dateCell}</td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${actions}</div></td>
@@ -6537,7 +6773,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '20aa55c4f646';
+const BUILD_ID = '2bceea0abb4d';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -6684,6 +6920,7 @@ async function pollSync() {
     if (r.rev === _syncRev || !canSyncNow()) return;
     await loadAllData();
     if (!_currentUser) return;
+    await refreshOwnPermissions(); // 管理員可能剛改了我的權限群組
     updateMainBadges();
     if (!isBusyEditing()) refreshCurrentPage();
     toast('已同步其他裝置的最新資料', 'success');
