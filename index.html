@@ -4365,8 +4365,8 @@ async function renderActivityFeed() {
     return `<div class="activity-item">
       <div class="activity-icon ${e.action}">${ACT_ICONS[e.action] || '•'}</div>
       <div class="activity-body">
-        <div><span class="activity-actor">${e.actor}</span> ${actionLabel} <span style="color:var(--text-muted)">[${typeLabel}]</span> <span class="activity-target">${e.target}</span></div>
-        <div class="activity-ts">${e.ts}</div>
+        <div><span class="activity-actor">${escHtml(e.actor)}</span> ${escHtml(actionLabel)} <span style="color:var(--text-muted)">[${escHtml(typeLabel)}]</span> <span class="activity-target">${escHtml(e.target)}</span></div>
+        <div class="activity-ts">${escHtml(e.ts)}</div>
       </div>
     </div>`;
   }).join('');
@@ -4804,7 +4804,8 @@ function toast(msg, type = 'success') {
   const icons = { success: '✅', error: '❌', warning: '⚠️' };
   const el = document.createElement('div');
   el.className = `toast ${type}`;
-  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span></span>`;
+  el.lastChild.textContent = msg; // 訊息可能帶有使用者輸入的名稱，當純文字顯示
   document.getElementById('toastContainer').appendChild(el);
   setTimeout(() => { el.style.animation = 'fadeOut 0.3s forwards'; setTimeout(() => el.remove(), 300); }, 2800);
 }
@@ -5414,10 +5415,10 @@ async function renderLoginLog() {
   const actionLabel = { login:'登入', logout:'登出', failed:'失敗', locked:'鎖定', expired:'到期', time_restricted:'時段限制' };
   el.innerHTML = log.map(e =>
     `<div class="ll-item">
-      <span class="ll-ts">${e.ts}</span>
-      <span class="ll-user">${e.displayName || e.username}</span>
-      <span class="ll-action ll-${e.action}">${actionLabel[e.action] || e.action}</span>
-      <span class="ll-detail">${e.detail || ''}</span>
+      <span class="ll-ts">${escHtml(e.ts)}</span>
+      <span class="ll-user">${escHtml(e.displayName || e.username)}</span>
+      <span class="ll-action ll-${escHtml(e.action)}">${escHtml(actionLabel[e.action] || e.action)}</span>
+      <span class="ll-detail">${escHtml(e.detail || '')}</span>
     </div>`
   ).join('');
 }
@@ -5973,13 +5974,13 @@ function applyRole(role) {
 }
 
 function updateHeaderUser(user) {
-  const initial = (user.displayName || user.username).charAt(0).toUpperCase();
+  const initial = escHtml((user.displayName || user.username).charAt(0).toUpperCase());
   const roleLabel = ROLE_LABELS[user.role] || user.role;
   document.getElementById('headerUser').innerHTML = `
     <div class="header-user">
       <div class="header-user-avatar">${initial}</div>
       <div>
-        <div class="header-user-name">${user.displayName}</div>
+        <div class="header-user-name">${escHtml(user.displayName)}</div>
         <div class="header-user-role">${roleLabel}</div>
       </div>
     </div>`;
@@ -6715,8 +6716,8 @@ function renderUsers() {
 
     return `<tr style="${rowStyle}">
       <td>${i + 1}</td>
-      <td><strong>${u.username}</strong>${isSelf ? ' <span style="color:var(--accent-light);font-size:11px;">(我)</span>' : ''}</td>
-      <td>${u.displayName}</td>
+      <td><strong>${escHtml(u.username)}</strong>${isSelf ? ' <span style="color:var(--accent-light);font-size:11px;">(我)</span>' : ''}</td>
+      <td>${escHtml(u.displayName)}</td>
       <td><span class="role-badge ${u.role}">${ROLE_LABELS[u.role] || u.role}</span></td>
       <td>${statusCell}</td>
       <td style="line-height:1.8">${groupTag}${pagesCell}</td>
@@ -6912,7 +6913,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '7adcc05b3873';
+const BUILD_ID = '9d6791387ae0';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
