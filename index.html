@@ -1085,6 +1085,15 @@
   }
   .sv-move-btn:hover { border-color: var(--accent); color: var(--accent-light); }
   .sv-move-btn:disabled { opacity: 0.25; cursor: default; }
+  /* 拖曳排序：按住 ☰ 上下拖（手機用手指、電腦用滑鼠） */
+  .sv-drag { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 24px; margin-right: 4px;
+    border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 13px; cursor: grab;
+    touch-action: none; user-select: none; -webkit-user-select: none; vertical-align: middle; }
+  .sv-drag:hover { border-color: var(--accent); color: var(--accent-light); }
+  tr.sv-dragging { background: rgba(245,200,66,0.14) !important; outline: 1px dashed var(--accent); opacity: 0.9; }
+  tr.sv-dragging .sv-drag { cursor: grabbing; color: var(--accent-light); border-color: var(--accent); }
+  body.sv-drag-active, body.sv-drag-active * { cursor: grabbing !important; user-select: none !important; }
+  body.mob-mode .sv-drag { width: 36px; height: 32px; font-size: 17px; }
   .sv-level-badge {
     display: inline-block;
     font-size: 9px;
@@ -5101,6 +5110,44 @@ async function migrateLocalSvOrder() {
   }
 }
 
+// ── 拖曳排序（Pointer Events：手指、滑鼠、觸控筆都適用）──
+let _svDrag = null;
+document.addEventListener('pointerdown', e => {
+  const handle = e.target.closest && e.target.closest('.sv-drag');
+  if (!handle || !canReorderSv()) return;
+  const row = handle.closest('tr[data-cid]');
+  if (!row) return;
+  e.preventDefault();
+  try { handle.setPointerCapture(e.pointerId); } catch {}
+  _svDrag = { row, tbody: row.parentElement, storeNo: row.dataset.store, pointerId: e.pointerId,
+    before: [...row.parentElement.querySelectorAll('tr[data-cid]')].map(r => +r.dataset.cid) };
+  row.classList.add('sv-dragging');
+  document.body.classList.add('sv-drag-active');
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch {} }
+});
+document.addEventListener('pointermove', e => {
+  if (!_svDrag || e.pointerId !== _svDrag.pointerId) return;
+  e.preventDefault();
+  const { row, tbody } = _svDrag;
+  const rows = [...tbody.querySelectorAll('tr[data-cid]')].filter(r => r !== row);
+  const target = rows.find(r => { const b = r.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
+  if (target) { if (row.nextElementSibling !== target) tbody.insertBefore(row, target); }
+  else if (rows.length) { const last = rows[rows.length - 1]; if (last.nextElementSibling !== row) last.after(row); }
+}, { passive: false });
+function endSvDrag(e) {
+  if (!_svDrag || (e && e.pointerId !== _svDrag.pointerId)) return;
+  const { row, tbody, storeNo, before } = _svDrag;
+  _svDrag = null;
+  row.classList.remove('sv-dragging');
+  document.body.classList.remove('sv-drag-active');
+  const ids = [...tbody.querySelectorAll('tr[data-cid]')].map(r => +r.dataset.cid);
+  if (ids.join(',') === before.join(',')) return;
+  setSvOrder(storeNo, ids);
+  renderStoreView(); // 更新順位數字和 ▲▼ 狀態
+}
+document.addEventListener('pointerup', endSvDrag);
+document.addEventListener('pointercancel', endSvDrag);
+
 function canReorderSv() {
   const u = getCurrentUser();
   return !!u && (u.role === 'admin' || u.role === 'superadmin');
@@ -5170,7 +5217,7 @@ function renderStoreView() {
           const rankCls = isInactive ? 'sv-rank-n' : idx === 0 ? 'sv-rank-1' : idx === 1 ? 'sv-rank-2' : 'sv-rank-n';
           const rankTip = isInactive ? '已離職' : idx === 0 ? '第一順位' : idx === 1 ? '第二順位' : `第${idx+1}順位`;
           const rowBg   = !isInactive && idx === 0 ? 'background:rgba(255,200,0,0.04)' : isInactive ? 'opacity:0.5' : '';
-          return `<tr style="${rowBg}">
+          return `<tr style="${rowBg}"${!isInactive ? ` data-cid="${c.id}" data-store="${escHtml(s.storeNo)}"` : ''}>
             <td style="width:28px;text-align:center">
               <span class="sv-rank ${rankCls}" title="${rankTip}">${isInactive ? '─' : idx+1}</span>
             </td>
@@ -5182,9 +5229,9 @@ function renderStoreView() {
             <td style="font-family:monospace;font-size:11px">
               <a href="tel:${c.mobile.replace(/-/g,'')}" style="color:${isInactive?'var(--text-muted)':'var(--accent-light)'};text-decoration:none">${c.mobile || '─'}</a>
             </td>
-            <td style="width:52px;text-align:right">
+            <td style="width:92px;text-align:right;white-space:nowrap">
               ${!isInactive && canReorderSv()
-                ? `<button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},-1)" ${idx===0?'disabled':''} title="上移">▲</button>
+                ? `<span class="sv-drag" title="按住拖曳調整順序">☰</span><button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},-1)" ${idx===0?'disabled':''} title="上移">▲</button>
                    <button class="sv-move-btn" onclick="moveSvContact('${s.storeNo}',${c.id},1)" ${idx===active.length-1?'disabled':''} title="下移">▼</button>`
                 : ''}
             </td>
@@ -5209,7 +5256,7 @@ function renderStoreView() {
       </div>
       ${infoRows ? `<div class="sv-info">${infoRows}</div>` : ''}
       <div class="sv-contacts">
-        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span style="font-size:10px;color:var(--text-muted);font-weight:400">（▲▼ 調整順序，所有裝置同步）</span>' : ''}</div>
+        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span style="font-size:10px;color:var(--text-muted);font-weight:400">（按住 ☰ 拖曳或按 ▲▼ 調整，所有裝置同步）</span>' : ''}</div>
         <table class="sv-contacts-table">
           <thead><tr><th style="width:28px">#</th><th>姓名</th><th>職稱</th><th>手機</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
@@ -7079,11 +7126,12 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'efeacaab5657';
+const BUILD_ID = '99001376db5e';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
   if (document.querySelector('.modal-overlay.open, .lightbox.open')) return true;
+  if (document.body.classList.contains('sv-drag-active')) return true; // 正在拖曳排序
   const a = document.activeElement;
   return !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' ||
     (a.tagName === 'INPUT' && !['button', 'submit', 'checkbox', 'radio', 'file'].includes(a.type)) || a.isContentEditable);
