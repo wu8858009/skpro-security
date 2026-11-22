@@ -1866,9 +1866,90 @@
 
   /* 店號聯絡人一覽：一欄 */
   body.mob-mode .storeview-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* ── 啟動動畫：網頁一打開就蓋住整個畫面，登入畫面或主畫面準備好才淡出 ── */
+  #splash {
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 42%, #173257 0%, #0d1b2a 55%, #070f1c 100%);
+    color: #e8edf5; transition: opacity .55s ease, visibility .55s ease;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  }
+  #splash.hide { opacity: 0; visibility: hidden; }
+  #splash .sp-emblem { position: relative; width: 132px; height: 132px; display: flex; align-items: center; justify-content: center; }
+  #splash .sp-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(245, 200, 66, .55); opacity: 0;
+    animation: spRing 2.4s ease-out infinite;
+  }
+  #splash .sp-ring.r2 { animation-delay: .8s; }
+  #splash .sp-ring.r3 { animation-delay: 1.6s; }
+  #splash .sp-glow {
+    position: absolute; inset: 14px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,200,66,.28), rgba(245,200,66,0) 70%);
+    animation: spGlow 2.4s ease-in-out infinite;
+  }
+  #splash svg { position: relative; width: 92px; height: 104px; animation: spPop .7s cubic-bezier(.2,1.4,.4,1) both; overflow: visible; }
+  #splash .sp-shield-line { fill: none; stroke: #f5c842; stroke-width: 4; stroke-linejoin: round;
+    stroke-dasharray: 330; stroke-dashoffset: 330; animation: spDraw 1s .15s ease-out forwards; }
+  #splash .sp-shield-fill { opacity: 0; animation: spFade .6s .9s ease-out forwards; }
+  #splash .sp-check { fill: none; stroke: #0a1628; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 80; stroke-dashoffset: 80; animation: spDraw .45s 1.2s ease-out forwards; }
+  #splash .sp-shine { animation: spShine 2.6s 1.5s ease-in-out infinite; }
+  #splash .sp-title {
+    margin-top: 26px; font-size: 26px; font-weight: 800; letter-spacing: 6px; text-align: center;
+    background: linear-gradient(90deg, #c8960c, #f5c842 45%, #fff3c4 50%, #f5c842 55%, #c8960c);
+    background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    opacity: 0; animation: spRise .7s .55s ease-out forwards, spTitleShine 3s 1.4s linear infinite;
+  }
+  #splash .sp-sub { margin-top: 8px; font-size: 11px; letter-spacing: 3px; color: #8a9bb5; text-align: center;
+    opacity: 0; animation: spRise .7s .75s ease-out forwards; }
+  #splash .sp-bar { margin-top: 34px; width: 200px; max-width: 60vw; height: 3px; border-radius: 3px;
+    background: rgba(255,255,255,.08); overflow: hidden; opacity: 0; animation: spFade .5s .9s forwards; }
+  #splash .sp-bar i { display: block; width: 40%; height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, transparent, #f5c842, transparent); animation: spSlide 1.2s ease-in-out infinite; }
+  #splash .sp-status { margin-top: 12px; min-height: 16px; font-size: 12px; color: #8a9bb5; letter-spacing: 1px;
+    opacity: 0; animation: spFade .5s 1s forwards; }
+  @keyframes spRing { 0% { transform: scale(.55); opacity: 0; } 20% { opacity: .9; } 100% { transform: scale(1.45); opacity: 0; } }
+  @keyframes spGlow { 0%, 100% { transform: scale(.9); opacity: .7; } 50% { transform: scale(1.1); opacity: 1; } }
+  @keyframes spPop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes spDraw { to { stroke-dashoffset: 0; } }
+  @keyframes spFade { to { opacity: 1; } }
+  @keyframes spRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes spTitleShine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+  @keyframes spSlide { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+  @keyframes spShine { 0%, 60% { transform: translateX(-120px); } 100% { transform: translateX(120px); } }
+  @media (max-width: 380px) { #splash .sp-title { font-size: 22px; letter-spacing: 4px; } }
+  @media (prefers-reduced-motion: reduce) {
+    #splash *, #splash { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+  }
 </style>
 </head>
 <body>
+
+<!-- 啟動動畫（hideSplash() 在登入畫面或主畫面準備好後把它淡出） -->
+<div id="splash" aria-label="新光保全管理系統 啟動中">
+  <div class="sp-emblem">
+    <div class="sp-ring"></div><div class="sp-ring r2"></div><div class="sp-ring r3"></div>
+    <div class="sp-glow"></div>
+    <svg viewBox="0 0 100 112" aria-hidden="true">
+      <defs>
+        <linearGradient id="spGold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffe08a"/><stop offset=".55" stop-color="#f5c842"/><stop offset="1" stop-color="#c8960c"/>
+        </linearGradient>
+        <clipPath id="spClip"><path d="M50 4 L92 19 V52 C92 80 74 98 50 108 C26 98 8 80 8 52 V19 Z"/></clipPath>
+      </defs>
+      <path class="sp-shield-fill" fill="url(#spGold)" d="M50 4 L92 19 V52 C92 80 74 98 50 108 C26 98 8 80 8 52 V19 Z"/>
+      <g clip-path="url(#spClip)"><rect class="sp-shine" x="-30" y="-10" width="22" height="140" fill="rgba(255,255,255,.45)" transform="skewX(-20)"/></g>
+      <path class="sp-shield-line" d="M50 4 L92 19 V52 C92 80 74 98 50 108 C26 98 8 80 8 52 V19 Z"/>
+      <path class="sp-check" d="M31 56 L45 70 L71 42"/>
+    </svg>
+  </div>
+  <div class="sp-title">新光保全管理系統</div>
+  <div class="sp-sub">SHIN KONG SECURITY MANAGEMENT</div>
+  <div class="sp-bar"><i></i></div>
+  <div class="sp-status" id="splashStatus">系統啟動中…</div>
+</div>
 
 <!-- Login Overlay -->
 <div class="login-overlay" id="loginOverlay">
@@ -5549,6 +5630,7 @@ async function checkAuth() {
 // the data cache from the server and brings up the main UI.
 async function afterAuthenticated(user) {
   setSession(user);
+  setSplashStatus('正在載入資料…');
   await loadAllData();
   hideLogin();
   applyRole(user.role);
@@ -6452,7 +6534,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'dcee728075e2';
+const BUILD_ID = '74167da7d53f';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -6625,13 +6707,30 @@ if (BUILD_ID) {
   setTimeout(checkForUpdate, 5000);
 }
 
+// ── 啟動動畫 ──
+const SPLASH_MIN_MS = 1600; // 動畫至少播完盾牌和打勾，不要一閃而過
+function setSplashStatus(text) {
+  const el = document.getElementById('splashStatus');
+  if (el) el.textContent = text;
+}
+function hideSplash() {
+  const el = document.getElementById('splash');
+  if (!el || el.classList.contains('hide')) return;
+  setTimeout(() => {
+    el.classList.add('hide');
+    setTimeout(() => el.remove(), 600);
+  }, Math.max(0, SPLASH_MIN_MS - performance.now()));
+}
+setTimeout(hideSplash, 20000); // 萬一網路卡住也不要一直擋著畫面
+
 (async () => {
   // Demo/seed data and initial-admin bootstrapping are now handled server-side
   // (see Program.cs SeedInitialAdminAsync) — the client just restores whatever
   // session cookie exists (if any) and lets checkAuth()/afterAuthenticated()
   // pull real data from the API. Nothing here should touch localStorage data.
   initViewMode();
-  checkAuth();
+  setSplashStatus('正在連線雲端…');
+  try { await checkAuth(); } finally { hideSplash(); }
 })();
 </script>
 </body>
