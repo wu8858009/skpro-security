@@ -1426,7 +1426,7 @@
     width: 100%; padding: 12px 14px;
     background: var(--bg); border: 1px solid var(--border);
     border-radius: var(--radius); color: var(--text);
-    font-size: 14px; font-family: inherit;
+    font-size: 16px; /* 至少 16px：iPhone 點進輸入框才不會自動放大畫面 */ font-family: inherit;
     outline: none; transition: border-color 0.2s;
   }
   .login-field input:focus { border-color: var(--accent); }
@@ -1748,6 +1748,8 @@
   body.mob-mode .search-input, body.mob-mode .filter-select, body.mob-mode .duty-input,
   body.mob-mode .search-bar input, body.mob-mode .modal-body input, body.mob-mode .modal-body select,
   body.mob-mode .modal-body textarea { font-size: 16px; }
+  body.mob-mode input:not([type=checkbox]):not([type=radio]):not([type=file]), body.mob-mode select,
+  body.mob-mode textarea { font-size: 16px; }
 
   /* 儀表板：統計卡三欄小卡 */
   body.mob-mode .stats-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; margin-bottom: 12px; }
@@ -5689,6 +5691,18 @@ async function doRegister() {
   document.getElementById('regConfirm').value = '';
 }
 
+// iPhone 打字時如果畫面被放大，登入後會一直維持放大、左右被切掉：登入後把畫面縮回剛好符合螢幕
+function resetPageZoom() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (meta) {
+    const orig = meta.getAttribute('content');
+    meta.setAttribute('content', orig + ', maximum-scale=1');
+    setTimeout(() => meta.setAttribute('content', orig), 400); // 還原，之後仍可用兩指放大
+  }
+  window.scrollTo(0, window.scrollY);
+}
+
 async function doLogin() {
   const username = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
@@ -5710,6 +5724,7 @@ async function doLogin() {
     localStorage.setItem(LAST_USER_KEY, username);
   } catch {}
 
+  resetPageZoom();
   await afterAuthenticated(user);
   toast(`歡迎回來，${user.displayName}！`, 'success');
 
@@ -6437,7 +6452,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '006aacc57101';
+const BUILD_ID = 'dcee728075e2';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
