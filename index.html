@@ -5079,6 +5079,28 @@ async function saveSvOrderNow(storeNo, storeId) {
     } catch {}
   } catch (e) { onSyncError(e); }
 }
+// 這台裝置以前（順位還存在瀏覽器時）排過的順序：雲端還沒有順序的店號，自動上傳一次，
+// 這樣桌面版排好的順序不用重排，手機就看得到
+async function migrateLocalSvOrder() {
+  if (!CLOUD_URL || !canReorderSv()) return;
+  let all;
+  try { all = JSON.parse(localStorage.getItem(SV_ORDER_KEY) || '{}'); } catch { return; }
+  const contactIds = new Set([...(_cache.contacts || []), ...(_cache.historicalContacts || [])].map(c => c.id));
+  let uploaded = 0;
+  for (const [storeNo, ids] of Object.entries(all)) {
+    const st = (_cache.stores || []).find(s => s.storeNo === storeNo);
+    if (!st || (Array.isArray(st.contactOrder) && st.contactOrder.length)) continue; // 雲端已經有順序就以雲端為準
+    const valid = (Array.isArray(ids) ? ids : []).filter(id => contactIds.has(id));
+    if (!valid.length) continue;
+    await setSvOrder(storeNo, valid);
+    uploaded++;
+  }
+  if (uploaded) {
+    toast(`已把這台裝置原本的聯絡人順位上傳雲端（${uploaded} 間店），其他裝置會自動同步`, 'success');
+    if (document.body.dataset.page === 'storeview') renderStoreView();
+  }
+}
+
 function canReorderSv() {
   const u = getCurrentUser();
   return !!u && (u.role === 'admin' || u.role === 'superadmin');
@@ -5903,6 +5925,7 @@ async function afterAuthenticated(user) {
   switchPage('dashboard');
   startSessionWatcher();
   setTimeout(maybeShowInstallBar, 1500);
+  setTimeout(migrateLocalSvOrder, 2500);
 }
 
 // 頁籤上的筆數（登入後、以及同步到其他裝置的變更後更新）
@@ -7056,7 +7079,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '9412f4e47d77';
+const BUILD_ID = 'efeacaab5657';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
