@@ -808,6 +808,18 @@
   }
   .store-perm-list label:hover { background: rgba(255,255,255,0.05); }
   .store-perm-list input[type=checkbox] { width: 13px; height: 13px; accent-color: var(--accent); flex-shrink:0; }
+  /* 依區域分組的店號勾選 */
+  .store-perm-list { max-height: 240px; }
+  .store-perm-list .spl-area { grid-column: 1 / -1; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px 6px; margin: 2px 0 4px; }
+  .store-perm-list .spl-area-head { font-weight: 700; color: var(--accent-light); font-size: 12.5px; }
+  .store-perm-list .spl-area-head small { font-weight: 400; color: var(--text-muted); font-size: 10.5px; }
+  .store-perm-list .spl-stores { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 2px 8px; padding-left: 16px; }
+  .store-perm-list .spl-stores label.spl-covered { opacity: 0.55; }
+  .store-perm-list .spl-sub { grid-column: 1 / -1; font-size: 11px; color: var(--text-muted); padding: 4px 2px 0; }
+  .site-tag { display: inline-block; font-size: 10.5px; padding: 1px 6px; border-radius: 4px; margin-left: 4px; white-space: nowrap;
+    background: rgba(56,178,172,0.14); color: #81e6d9; border: 1px solid rgba(56,178,172,0.3); font-weight: 600; vertical-align: middle; }
+  .area-tag { display: inline-block; font-size: 10.5px; padding: 1px 6px; border-radius: 4px; margin-top: 3px; white-space: nowrap;
+    background: rgba(56,178,172,0.14); color: #81e6d9; border: 1px solid rgba(56,178,172,0.3); }
   .store-perm-tag { font-size: 10px; padding: 1px 5px; border-radius: 4px; background: rgba(255,200,0,0.12); color: var(--accent-light); border: 1px solid rgba(255,200,0,0.2); white-space: nowrap; }
   .field-req-tabs {
     display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
@@ -2550,6 +2562,10 @@
           <input class="form-input" type="date" id="k_expiry">
         </div>
         <div class="form-group full">
+          <label class="form-label">📍 所屬地點 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（只有能看這個地點的帳號看得到；不指定＝所有帳號都看得到）</span></label>
+          <select class="form-select" id="k_site"></select>
+        </div>
+        <div class="form-group full">
           <label class="form-label">可進入區域</label>
           <input class="form-input" id="k_areas" placeholder="如：A棟大廳、地下停車場、B1機房">
         </div>
@@ -2582,6 +2598,10 @@
         <div class="form-group">
           <label class="form-label">管理位置 <span class="required">*</span></label>
           <input class="form-input" id="ky_location" placeholder="如：A棟1F電梯機房">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">📍 所屬地點 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（只有能看這個地點的帳號看得到；不指定＝所有帳號都看得到）</span></label>
+          <select class="form-select" id="ky_site"></select>
         </div>
         <div class="form-group">
           <label class="form-label">鑰匙類型</label>
@@ -2645,6 +2665,11 @@
         <div class="form-group">
           <label class="form-label">店名</label>
           <input class="form-input" id="s_storeName" placeholder="如：一號店、倉庫">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">📍 區域 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（同一區的店號填一樣的名稱；帳號權限可以直接勾整個區域）</span></label>
+          <input class="form-input" id="s_area" list="storeAreaOptions" maxlength="30" placeholder="如：○○區、○○店">
+          <datalist id="storeAreaOptions"></datalist>
         </div>
         <div class="form-group full">
           <label class="form-label">客戶名稱</label>
@@ -2961,6 +2986,10 @@
         <input class="form-input" type="text" id="bp_location" placeholder="例：警衛室右側檔案櫃第二層">
       </div>
       <div class="form-group">
+        <label class="form-label">📍 所屬地點 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（只有能看這個地點的帳號看得到；不指定＝所有帳號都看得到）</span></label>
+        <select class="form-select" id="bp_site"></select>
+      </div>
+      <div class="form-group">
         <label class="form-label">守護區域</label>
         <input class="form-input" type="text" id="bp_area" placeholder="例：A棟全區、地下室B1-B2">
       </div>
@@ -3012,7 +3041,7 @@
         <div class="pages-checklist" id="g_pages_checklist"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">可觀看店號 <span style="font-weight:400;color:var(--text-muted);font-size:11px">（全部勾選或全部不勾 = 全部開放）</span></label>
+        <label class="form-label">📍 可觀看地點（區域／店號） <span style="font-weight:400;color:var(--text-muted);font-size:11px">（店號、聯絡人、保全卡、鑰匙、設計圖都只看得到這些地點的；全部勾或都不勾 = 全部開放）</span></label>
         <div class="store-perm-wrap">
           <div class="store-perm-toolbar">
             <button type="button" class="btn btn-sm btn-outline" onclick="storePermSelectAll(true, 'g_store_perm_list')" style="font-size:11px;padding:2px 8px;">全選</button>
@@ -3074,14 +3103,14 @@
         </div>
       </div>
       <div class="form-group" id="u_storeview_group">
-        <label class="form-label">🗂️ 店號聯絡人一覽 — 可觀看店號
-          <span style="font-weight:400;color:var(--text-muted);font-size:11px">（不勾選任何店號 = 全部開放；總管理員不受限）</span>
+        <label class="form-label">📍 可觀看地點（區域／店號）
+          <span style="font-weight:400;color:var(--text-muted);font-size:11px">（店號、聯絡人、保全卡、鑰匙、設計圖都只看得到這些地點的；全部勾或都不勾 = 全部開放；總管理員不受限）</span>
         </label>
         <div class="store-perm-wrap">
           <div class="store-perm-toolbar">
             <button type="button" class="btn btn-sm btn-outline" onclick="storePermSelectAll(true)" style="font-size:11px;padding:2px 8px;">全選</button>
             <button type="button" class="btn btn-sm btn-outline" onclick="storePermSelectAll(false)" style="font-size:11px;padding:2px 8px;">全不選</button>
-            <span style="font-size:11px;color:var(--text-muted);margin-left:4px">勾選後僅能觀看所勾選店號</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:4px">勾整個區域＝之後新增到這區的店號也看得到</span>
           </div>
           <div class="store-perm-list" id="u_store_perm_list"></div>
         </div>
@@ -3318,7 +3347,7 @@ function toApiPayload(endpoint, obj) {
   }
   if (endpoint === 'blueprints') {
     return {
-      title: obj.title, location: obj.location, area: obj.area || null, floor: obj.floor || null,
+      title: obj.title, location: obj.location, area: obj.area || null, floor: obj.floor || null, site: obj.site || null,
       note: obj.note || null, fileName: obj.fileName || null, fileType: obj.fileType || null,
       filePath: toCloudRef(obj.imageData) || null,
     };
@@ -3667,7 +3696,7 @@ function renderCards() {
     return `
     <tr>
       <td style="color:var(--text-muted)">${i+1}${auditTag(c)}</td>
-      <td><strong>${c.holder}</strong></td>
+      <td><strong>${c.holder}</strong>${siteTag(c.site)}</td>
       <td style="font-family:monospace;color:var(--accent-light)">${c.number}</td>
       <td><span style="color:var(--text-muted)">${typeLabels[c.type]||c.type}</span></td>
       <td style="color:var(--text-muted)">${c.issued||'─'}</td>
@@ -3719,7 +3748,7 @@ function renderKeys() {
     <tr>
       <td style="color:var(--text-muted)">${i+1}${auditTag(k)}</td>
       <td style="font-family:monospace;color:var(--accent-light);font-weight:700">${k.code}</td>
-      <td><strong>${k.location}</strong></td>
+      <td><strong>${k.location}</strong>${siteTag(k.site)}</td>
       <td style="color:var(--text-muted)">${typeLabels[k.type]||k.type}</td>
       <td style="text-align:center;color:var(--text-muted)">${k.qty}</td>
       <td style="color:${k.holder?'var(--text)':'var(--text-muted)'}">${k.holder||'─'}</td>
@@ -4257,14 +4286,16 @@ function openModal(type, data) {
     document.getElementById('k_status').value = data ? data.status : 'active';
     document.getElementById('k_issued').value = data ? (data.issued || '') : new Date().toISOString().split('T')[0];
     document.getElementById('k_expiry').value = data ? (data.expiry || '') : '';
+    fillSiteSelect('k_site', data ? data.site : '');
     applyModuleFieldReq('card');
     document.getElementById('modalCard').classList.add('open');
   } else if (type === 'store') {
     editingStoreId = data ? data.id : null;
     document.getElementById('storeModalTitle').textContent = data ? '編輯店號資料' : '新增店號資料';
-    ['storeNo','storeName','customerName','customerId','hostNo','hostId','address'].forEach(f => {
+    ['storeNo','storeName','customerName','customerId','hostNo','hostId','address','area'].forEach(f => {
       document.getElementById('s_' + f).value = data ? (data[f] || '') : '';
     });
+    document.getElementById('storeAreaOptions').innerHTML = storeAreas().map(a => `<option value="${escHtml(a)}">`).join('');
     applyModuleFieldReq('store');
     document.getElementById('modalStore').classList.add('open');
   } else if (type === 'key') {
@@ -4278,6 +4309,7 @@ function openModal(type, data) {
     document.getElementById('ky_qty').value = data ? (data.qty || 1) : 1;
     document.getElementById('ky_borrow_time').value = data ? (data.borrowTime || '') : '';
     document.getElementById('ky_return_time').value = data ? (data.returnTime || '') : '';
+    fillSiteSelect('ky_site', data ? data.site : '');
     applyModuleFieldReq('key');
     document.getElementById('modalKey').classList.add('open');
   }
@@ -4610,6 +4642,7 @@ function saveCard() {
     expiry: document.getElementById('k_expiry').value,
     areas: document.getElementById('k_areas').value.trim(),
     note: document.getElementById('k_note').value.trim(),
+    site: document.getElementById('k_site').value,
     ...auditCard
   };
   if (editingCardId) {
@@ -4648,6 +4681,7 @@ function saveKey() {
     returnTime: document.getElementById('ky_return_time').value,
     status: document.getElementById('ky_status').value,
     note: document.getElementById('ky_note').value.trim(),
+    site: document.getElementById('ky_site').value,
     ...auditKey
   };
   if (editingKeyId) {
@@ -4835,7 +4869,7 @@ function renderStores() {
           ${s.storeNo}
         </span>
       </td>
-      <td style="font-weight:${isMain?'600':'400'}">${s.storeName || '─'}</td>
+      <td style="font-weight:${isMain?'600':'400'}">${s.storeName || '─'}${s.area ? `<br><span class="area-tag">📍 ${escHtml(s.area)}</span>` : ''}</td>
       <td style="font-weight:${isMain?'600':'400'};max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.customerName}">${s.customerName || '<span style="color:var(--text-muted);font-style:italic">附屬店號</span>'}</td>
       <td style="font-family:monospace;font-size:12px;color:var(--text-muted)">${s.customerId || '─'}</td>
       <td style="font-family:monospace;font-size:12px;color:var(--text-muted)">${s.hostNo || '─'}</td>
@@ -4881,6 +4915,7 @@ function saveStore() {
     hostNo:       document.getElementById('s_hostNo').value.trim(),
     hostId:       document.getElementById('s_hostId').value.trim(),
     address:      document.getElementById('s_address').value.trim(),
+    area:         document.getElementById('s_area').value.trim(),
     ...auditStore
   };
   if (editingStoreId) {
@@ -6001,6 +6036,46 @@ function onRoleChange() {
 }
 
 // ── 店號觀看清單輔助 ──
+// ── 區域與所屬地點 ──
+// 帳號／群組「可看店號」清單裡：店號，或「區域:碧潭區」＝整個區域（含之後新增到這區的店號）
+const AREA_PREFIX = '區域:';
+
+function storeAreas() {
+  return [...new Set(DB.get('stores').map(s => (s.area || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+}
+
+function storeLabel(s) { return s.storeName ? `${s.storeNo} ${s.storeName}` : s.storeNo; }
+
+// 卡片／鑰匙／設計圖上顯示的地點小標籤
+function siteTag(site) {
+  if (!site) return '';
+  if (site.startsWith(AREA_PREFIX)) return `<span class="site-tag" title="所屬地點：整個區域">📍 ${escHtml(site.slice(AREA_PREFIX.length))}</span>`;
+  const st = DB.get('stores').find(s => s.storeNo === site);
+  const area = st && st.area ? `${st.area}・` : '';
+  return `<span class="site-tag" title="所屬地點">📍 ${escHtml(area + (st ? storeLabel(st) : site))}</span>`;
+}
+
+// 所屬地點下拉選單：不指定／整個區域／區域底下的店號／未分區店號
+function fillSiteSelect(selectId, value) {
+  const sel = document.getElementById(selectId);
+  const stores = DB.get('stores').slice().sort((a, b) => a.storeNo.localeCompare(b.storeNo));
+  const opt = (v, t) => `<option value="${escHtml(v)}">${escHtml(t)}</option>`;
+  let html = opt('', '（不指定：所有帳號都看得到）');
+  storeAreas().forEach(area => {
+    html += `<optgroup label="📍 ${escHtml(area)}">` + opt(AREA_PREFIX + area, `整個${area}`) +
+      stores.filter(s => (s.area || '').trim() === area).map(s => opt(s.storeNo, storeLabel(s))).join('') + '</optgroup>';
+  });
+  const loose = stores.filter(s => !(s.area || '').trim());
+  if (loose.length) html += '<optgroup label="未分區的店號">' + loose.map(s => opt(s.storeNo, storeLabel(s))).join('') + '</optgroup>';
+  sel.innerHTML = html;
+  value = value || '';
+  if (value && ![...sel.options].some(o => o.value === value)) {
+    sel.insertAdjacentHTML('beforeend', opt(value, value + '（已不存在，請重新選擇）'));
+  }
+  sel.value = value;
+}
+
+// 帳號／群組的「可觀看店號」：依區域分組，區域可以整區勾
 function renderStorePermList(allowedStoreNos, listId) {
   const list = document.getElementById(listId || 'u_store_perm_list');
   if (!list) return;
@@ -6008,18 +6083,51 @@ function renderStorePermList(allowedStoreNos, listId) {
   if (!stores.length) { list.innerHTML = '<span style="color:var(--text-muted);font-size:12px;padding:6px">尚無店號資料</span>'; return; }
   // allowedStoreNos null/空陣列 = 全部勾（等同不限制）
   const hasRestriction = Array.isArray(allowedStoreNos) && allowedStoreNos.length > 0;
-  list.innerHTML = stores.map(s => {
-    const checked = !hasRestriction || allowedStoreNos.includes(s.storeNo);
-    const label   = s.storeName ? `${s.storeNo} ${s.storeName}` : s.storeNo;
-    return `<label title="${label}">
-      <input type="checkbox" value="${s.storeNo}" ${checked ? 'checked' : ''}>
-      <span style="overflow:hidden;text-overflow:ellipsis">${label}</span>
-    </label>`;
+  const allowed = new Set(hasRestriction ? allowedStoreNos : []);
+  const storeBox = (s, area) => {
+    const checked = !hasRestriction || allowed.has(s.storeNo) || (area && allowed.has(AREA_PREFIX + area));
+    const label = storeLabel(s);
+    return `<label title="${escHtml(label)}"><input type="checkbox" value="${escHtml(s.storeNo)}" data-store="1"${area ? ` data-in-area="${escHtml(area)}"` : ''} ${checked ? 'checked' : ''}>
+      <span style="overflow:hidden;text-overflow:ellipsis">${escHtml(label)}</span></label>`;
+  };
+  let html = storeAreas().map(area => {
+    const areaChecked = !hasRestriction || allowed.has(AREA_PREFIX + area);
+    return `<div class="spl-area">
+      <label class="spl-area-head"><input type="checkbox" data-area="${escHtml(area)}" ${areaChecked ? 'checked' : ''}> 📍 整個${escHtml(area)} <small>（含之後新增到這區的店號）</small></label>
+      <div class="spl-stores">${stores.filter(s => (s.area || '').trim() === area).map(s => storeBox(s, area)).join('')}</div>
+    </div>`;
   }).join('');
+  const loose = stores.filter(s => !(s.area || '').trim());
+  if (loose.length) {
+    if (html) html += '<div class="spl-sub">未分區的店號</div>';
+    html += loose.map(s => storeBox(s, '')).join('');
+  }
+  list.innerHTML = html;
+  if (!list._areaWired) {
+    list.addEventListener('change', e => { if (e.target.dataset.area !== undefined) syncAreaCoverage(list.id); });
+    list._areaWired = true;
+  }
+  syncAreaCoverage(list.id);
+}
+
+// 整區勾了：底下店號一律勾起來並鎖住（已經被整區涵蓋）
+function syncAreaCoverage(listId) {
+  const root = document.getElementById(listId);
+  if (!root) return;
+  root.querySelectorAll('input[data-area]').forEach(areaCb => {
+    root.querySelectorAll('input[data-store]').forEach(cb => {
+      if (cb.dataset.inArea !== areaCb.dataset.area) return;
+      if (areaCb.checked) cb.checked = true;
+      cb.disabled = areaCb.checked;
+      cb.closest('label').classList.toggle('spl-covered', areaCb.checked);
+    });
+  });
 }
 
 function storePermSelectAll(checked, listId) {
-  document.querySelectorAll('#' + (listId || 'u_store_perm_list') + ' input[type=checkbox]').forEach(cb => { cb.checked = checked; });
+  const id = listId || 'u_store_perm_list';
+  document.querySelectorAll('#' + id + ' input[type=checkbox]').forEach(cb => { cb.checked = checked; });
+  syncAreaCoverage(id);
 }
 
 // 勾選框 → 權限清單（全部勾＝不限制＝null）
@@ -6027,10 +6135,23 @@ function readPagesChecklist(containerId) {
   const checked = [...document.querySelectorAll('#' + containerId + ' input[type=checkbox]:checked')].map(cb => cb.value);
   return checked.length < ALL_PAGES.length ? checked : null;
 }
+// 勾了整個區域 → 存「區域:XX」（之後新增到這區的店號也看得到）；其餘個別勾的店號存店號
 function readStorePermList(listId) {
-  const all = [...document.querySelectorAll('#' + listId + ' input[type=checkbox]')];
-  const nos = all.filter(cb => cb.checked).map(cb => cb.value);
-  return nos.length > 0 && nos.length < all.length ? nos : null;
+  const root = document.getElementById(listId);
+  const areaCbs = [...root.querySelectorAll('input[data-area]')];
+  const looseCbs = [...root.querySelectorAll('input[data-store]:not([data-in-area])')];
+  const out = [];
+  areaCbs.filter(cb => cb.checked).forEach(cb => out.push(AREA_PREFIX + cb.dataset.area));
+  root.querySelectorAll('input[data-store]').forEach(cb => {
+    if (!cb.checked) return;
+    const a = cb.dataset.inArea;
+    if (a && areaCbs.some(x => x.dataset.area === a && x.checked)) return; // 已被整區涵蓋
+    out.push(cb.value);
+  });
+  if (!out.length) return null; // 都不勾＝不限制
+  const allAreas = areaCbs.every(cb => cb.checked);
+  const allLoose = looseCbs.every(cb => cb.checked);
+  return allAreas && allLoose ? null : out; // 全部勾＝不限制
 }
 
 function renderPagesChecklist(containerId, allowed) {
@@ -6056,9 +6177,10 @@ function pagesTags(pages) {
 function storesSummary(nos) {
   if (!nos || !nos.length) return '<span class="page-tag-all">全部店號</span>';
   const stores = DB.get('stores');
-  const names = nos.map(no => { const st = stores.find(x => x.storeNo === no); return st && st.storeName ? `${no} ${st.storeName}` : no; });
+  const areas = nos.filter(n => n.startsWith(AREA_PREFIX)).map(n => `<span class="area-tag">📍 ${escHtml(n.slice(AREA_PREFIX.length))}（整區）</span> `);
+  const names = nos.filter(n => !n.startsWith(AREA_PREFIX)).map(no => { const st = stores.find(x => x.storeNo === no); return st && st.storeName ? `${no} ${st.storeName}` : no; });
   const shown = names.slice(0, 4).map(n => `<span class="page-tag">${escHtml(n)}</span>`).join('');
-  return shown + (names.length > 4 ? `<span class="page-tag-all"> 等 ${names.length} 家</span>` : '');
+  return areas.join('') + shown + (names.length > 4 ? `<span class="page-tag-all"> 等 ${names.length} 家</span>` : '');
 }
 
 function renderGroups() {
@@ -6552,8 +6674,7 @@ function renderUsers() {
     if (u.role === 'superadmin' || !u.allowedStoreNos || u.allowedStoreNos.length === 0) {
       storeCell = '<span class="page-tag-all">全部店號</span>';
     } else {
-      storeCell = u.allowedStoreNos.map(no => `<span class="store-perm-tag">${no}</span>`).join('')
-               + `<span style="font-size:10px;color:var(--text-muted);margin-left:2px">(${u.allowedStoreNos.length}間)</span>`;
+      storeCell = storesSummary(u.allowedStoreNos);
     }
 
     // ── 到期日 / 最後登入欄 ──
@@ -6631,7 +6752,7 @@ function renderBlueprints() {
       : (b.imageData && isDoc ? '<button class="btn btn-sm btn-outline" onclick="downloadBlueprint(' + b.id + ')" title="下載">⬇️</button>' : '');
     return '<div class="blueprint-card">' + thumb +
       '<div class="blueprint-info">' +
-        '<div class="blueprint-title">' + (b.title || '') + '</div>' +
+        '<div class="blueprint-title">' + (b.title || '') + siteTag(b.site) + '</div>' +
         (b.area  ? '<div class="blueprint-meta">🛡️ ' + b.area  + '</div>' : '') +
         (b.floor ? '<div class="blueprint-meta">📐 ' + b.floor + '</div>' : '') +
         '<div class="blueprint-loc">📁 ' + (b.location || '—') + '</div>' +
@@ -6669,6 +6790,7 @@ function openBlueprintModal(id) {
     document.getElementById('bp_area').value     = b.area     || '';
     document.getElementById('bp_floor').value    = b.floor    || '';
     document.getElementById('bp_note').value     = b.note     || '';
+    fillSiteSelect('bp_site', b.site || '');
     if (b.imageData) {
       const isDoc = b.fileType && !b.fileType.startsWith('image/');
       if (isDoc) { document.getElementById('bp_docName').textContent = b.fileName || 'Word 文件'; docPrev.style.display = 'flex'; }
@@ -6676,6 +6798,7 @@ function openBlueprintModal(id) {
     }
   } else {
     ['bp_title','bp_location','bp_area','bp_floor','bp_note'].forEach(function(fid){ document.getElementById(fid).value = ''; });
+    fillSiteSelect('bp_site', '');
   }
   document.getElementById('blueprintModal').classList.add('open');
 }
@@ -6714,6 +6837,7 @@ async function saveBlueprint() {
   const area  = document.getElementById('bp_area').value.trim();
   const floor = document.getElementById('bp_floor').value.trim();
   const note  = document.getElementById('bp_note').value.trim();
+  const site  = document.getElementById('bp_site').value;
   const now   = new Date().toISOString().slice(0,10);
 
   // A new file was picked this session — upload it and use the returned URL.
@@ -6734,12 +6858,12 @@ async function saveBlueprint() {
   if (editingBlueprintId) {
     const idx = blueprints.findIndex(b => b.id === editingBlueprintId);
     if (idx !== -1) {
-      Object.assign(blueprints[idx], { title, location, area, floor, note, updatedAt: now });
+      Object.assign(blueprints[idx], { title, location, area, floor, note, site, updatedAt: now });
       if (fileFields) Object.assign(blueprints[idx], fileFields);
     }
     toast('設計圖已更新', 'success');
   } else {
-    blueprints.push({ id: Date.now(), title, location, area, floor, note, imageData: null, fileType: null, fileName: null, ...fileFields, createdAt: now, updatedAt: now });
+    blueprints.push({ id: Date.now(), title, location, area, floor, note, site, imageData: null, fileType: null, fileName: null, ...fileFields, createdAt: now, updatedAt: now });
     toast('設計圖已新增', 'success');
   }
   DB.set('blueprints', blueprints);
@@ -6773,7 +6897,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '2bceea0abb4d';
+const BUILD_ID = '2835a3b7c104';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
