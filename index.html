@@ -920,7 +920,7 @@
 
   /* ── Print ── */
   /* 手機主畫面 App 不支援列印：把頁面排成白底版面再轉 PDF（只在產生 PDF 那一下存在，畫面外） */
-  .pdf-sheet { position: fixed; left: -20000px; top: 0; width: 1050px; padding: 28px 30px; background: #fff; color: #111;
+  .pdf-sheet { position: fixed; left: -20000px; top: 0; width: 1480px; padding: 28px 30px; background: #fff; color: #111;
     --bg: #ffffff; --surface: #ffffff; --surface2: #f4f4f4; --border: #c8c8c8; --text: #111111; --text-muted: #555555;
     --accent: #8a6400; --accent-light: #8a6400; --primary: #1a3a5c; --shadow: none; font-size: 13px; }
   .pdf-sheet * { box-shadow: none !important; text-shadow: none !important; animation: none !important; transition: none !important; }
@@ -932,12 +932,14 @@
   .pdf-sheet .data-table th { background: #eeeeee !important; color: #000 !important; }
   .pdf-sheet .data-table td { color: #000 !important; }
   .pdf-sheet .table-wrap, .pdf-sheet .surface, .pdf-sheet .sv-card, .pdf-sheet .stat-card { background: #fff !important; border-color: #c8c8c8 !important; }
-  .pdf-sheet .storeview-grid { grid-template-columns: 1fr 1fr !important; }
+  .pdf-sheet .storeview-grid { grid-template-columns: 1fr 1fr 1fr !important; }
   .pdf-sheet .sv-contacts-title span { display: none !important; }
   .pdf-sheet .area-tag, .pdf-sheet .site-tag { color: #0b5f58 !important; background: #e3f4f2 !important; border-color: #8fcac3 !important; }
   .pdf-busy { position: fixed; inset: 0; z-index: 100001; background: rgba(7,15,28,0.88); color: #fff; display: flex;
     flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 15px; padding: 20px; text-align: center; }
   .pdf-busy .btn { min-width: 220px; justify-content: center; }
+  /* 列印一律橫向 A4 */
+  @page { size: A4 landscape; margin: 10mm; }
   @media print {
     .header, .nav-tabs, .section-actions, .btn, .search-bar, .modal-overlay { display: none !important; }
     body { background: #fff; color: #000; }
@@ -4967,14 +4969,14 @@ async function printPagePdf(type) {
     if (wasMob) document.body.classList.remove('mob-mode');
     document.body.appendChild(sheet);
     await new Promise(r => setTimeout(r, 50));
-    const canvas = await window.html2canvas(sheet, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: 1110 });
+    const canvas = await window.html2canvas(sheet, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: 1540 });
     sheet.remove(); sheet = null;
     if (wasMob) { document.body.classList.add('mob-mode'); fitMobileNav(); }
 
-    // 切成 A4 直式一頁一頁
+    // 切成 A4 橫式一頁一頁
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = 210, pageH = 297, margin = 8;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = 297, pageH = 210, margin = 8;
     const imgW = pageW - margin * 2;
     const pxPerMm = canvas.width / imgW;
     const sliceH = Math.floor((pageH - margin * 2) * pxPerMm);
@@ -7228,7 +7230,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '955341832232';
+const BUILD_ID = '1d69335ae142';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
