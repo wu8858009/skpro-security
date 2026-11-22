@@ -2799,6 +2799,9 @@
         <span class="icon">🔍</span>
         <input class="search-input" type="text" placeholder="搜尋店號、店名、聯絡人..." id="storeviewSearch" oninput="renderStoreView()">
       </div>
+      <select class="filter-select" id="storeviewArea" onchange="renderStoreView()" title="依區域篩選">
+        <option value="">📍 全部區域</option>
+      </select>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer;">
         <input type="checkbox" id="storeviewHideEmpty" onchange="renderStoreView()" style="cursor:pointer;">
         隱藏無聯絡人店號
@@ -4975,11 +4978,23 @@ function moveSvContact(storeNo, contactId, dir) {
 function renderStoreView() {
   const q = (document.getElementById('storeviewSearch')?.value || '').toLowerCase();
   const hideEmpty = document.getElementById('storeviewHideEmpty')?.checked;
-  const currentUser = getCurrentUser();
-  const allowedStoreNos = (currentUser?.role !== 'superadmin' && Array.isArray(currentUser?.allowedStoreNos) && currentUser.allowedStoreNos.length > 0)
-    ? currentUser.allowedStoreNos : null;
+  // 看得到哪些店號由雲端決定（含「整個區域」的權限），這裡不再自己篩
   let stores = DB.get('stores').slice().sort((a, b) => a.storeNo.localeCompare(b.storeNo));
-  if (allowedStoreNos) stores = stores.filter(s => allowedStoreNos.includes(s.storeNo));
+  // 區域下拉選單：選項跟著目前看得到的店號；選了的區域不見了就回到全部
+  const areaSel = document.getElementById('storeviewArea');
+  if (areaSel) {
+    const areas = storeAreas();
+    const hasLoose = stores.some(s => !(s.area || '').trim());
+    const prev = areaSel.value;
+    areaSel.innerHTML = '<option value="">📍 全部區域</option>' +
+      areas.map(a => `<option value="${escHtml(a)}">📍 ${escHtml(a)}（${stores.filter(s => (s.area || '').trim() === a).length}）</option>`).join('') +
+      (hasLoose && areas.length ? '<option value="__none__">未分區</option>' : '');
+    areaSel.value = [...areaSel.options].some(o => o.value === prev) ? prev : '';
+    areaSel.style.display = areas.length ? '' : 'none';
+    const pick = areaSel.value;
+    if (pick === '__none__') stores = stores.filter(s => !(s.area || '').trim());
+    else if (pick) stores = stores.filter(s => (s.area || '').trim() === pick);
+  }
   // 合併在職與歷史聯絡人，讓店號一覽可顯示所有對應人員
   const contacts = [...DB.get('contacts'), ...DB.get('historicalContacts')];
   const LEVEL = { '1':'一級', '2':'二級', '3':'三級' };
@@ -5035,7 +5050,7 @@ function renderStoreView() {
     <div class="sv-card">
       <div class="sv-card-head">
         <span class="sv-store-no">${s.storeNo}</span>
-        <span class="sv-store-name">${s.storeName || '─'}</span>
+        <span class="sv-store-name">${s.storeName || '─'}${s.area ? ` <span class="area-tag">📍 ${escHtml(s.area)}</span>` : ''}</span>
         <span class="sv-contact-count">${active.length} 在職${inactive.length > 0 ? ` / ${inactive.length} 離職` : ''}</span>
       </div>
       ${infoRows ? `<div class="sv-info">${infoRows}</div>` : ''}
@@ -6897,7 +6912,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '2835a3b7c104';
+const BUILD_ID = '7adcc05b3873';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
