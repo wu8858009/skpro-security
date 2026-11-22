@@ -3327,9 +3327,20 @@ async function apiJson(path, options) {
   return res.json();
 }
 
+// 雲端拒絕儲存（例如漏填店號、重複、沒有權限）：顯示真正的原因，並把畫面換回雲端上的資料，
+// 不要讓沒存成功的資料留在畫面上，看起來像已經新增／修改
+let _resyncTimer = null;
 function onSyncError(err) {
   console.error('同步至伺服器失敗:', err);
-  toast('儲存失敗，請重新整理頁面後再試一次', 'error');
+  toast('儲存失敗：' + ((err && err.message) || '請稍後再試'), 'error');
+  clearTimeout(_resyncTimer);
+  _resyncTimer = setTimeout(async () => {
+    try {
+      await loadAllData();
+      updateMainBadges();
+      refreshCurrentPage();
+    } catch (e) { console.warn('重新載入失敗', e); }
+  }, 400);
 }
 
 // Cache keys backed by a plain REST collection (id-diffed automatically).
@@ -4896,6 +4907,7 @@ function renderStores() {
 
 function saveStore() {
   const storeNo = document.getElementById('s_storeNo').value.trim().toUpperCase();
+  if (!storeNo) { toast('請填寫店號', 'error'); document.getElementById('s_storeNo').focus(); return; }
   if (!validateModuleFields('store', {
     storeNo,
     storeName:    document.getElementById('s_storeName').value.trim(),
@@ -6920,7 +6932,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '29ad34eb58d9';
+const BUILD_ID = 'b83676205066';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
