@@ -5912,7 +5912,7 @@ async function loadAllData() {
   const isAdmin = !!(_currentUser && (_currentUser.role === 'admin' || _currentUser.role === 'superadmin'));
   const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users, groups, continuousEntry] = await Promise.all([
     CLOUD_URL ? apiJson('/sync').catch(() => null) : null,
-    pageList('contacts', '/contacts'), pageList('cards', '/cards'), pageList('keys', '/keys'), apiJson('/stores'),
+    pageList(canSeePage('storeview') ? 'storeview' : 'contacts', '/contacts'), pageList('cards', '/cards'), pageList('keys', '/keys'), apiJson('/stores'),
     apiJson('/announcements'), pageList('blueprints', '/blueprints'), apiJson('/systempolicy'),
     apiJson('/appsettings/duty').then(r => (r && r.value) || '').catch(() => ''),
     isAdmin ? apiJson('/users').catch(() => []) : [],
@@ -7032,7 +7032,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'aef70c62ff5f';
+const BUILD_ID = 'c93b2bbccaaf';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
