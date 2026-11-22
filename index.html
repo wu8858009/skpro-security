@@ -3526,11 +3526,9 @@ const photoCache = {};
 function switchPage(page) {
   // 頁籤門禁：非 superadmin 且有頁籤限制時阻擋存取
   const user = getCurrentUser();
-  if (user && user.role !== 'superadmin' && user.allowedPages && user.allowedPages.length > 0) {
-    if (!user.allowedPages.includes(page) && page !== 'users') {
-      toast('您沒有存取此頁面的權限', 'error');
-      return;
-    }
+  if (user && page !== 'users' && !pageOpenFor(user, page)) {
+    toast('您沒有存取此頁面的權限', 'error');
+    return;
   }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -5823,6 +5821,13 @@ function getModuleRequiredFields(module) {
 // 向下相容舊版 getRequiredFields（緊急聯絡人）
 function getRequiredFields() { return getModuleRequiredFields('contact'); }
 
+// 只開放給總管理員的頁面（雲端也會擋）：其他帳號不管怎麼勾都看不到
+const SUPER_ONLY_PAGES = ['contacts', 'stores', 'blueprints'];
+function pageOpenFor(user, page) {
+  if (!user || user.role === 'superadmin') return true;
+  if (SUPER_ONLY_PAGES.includes(page)) return false;
+  return !user.allowedPages || !user.allowedPages.length || user.allowedPages.includes(page);
+}
 const ALL_PAGES = [
   { id: 'dashboard',  label: '📊 總覽儀表板' },
   { id: 'contacts',   label: '📞 緊急聯絡人' },
@@ -5891,10 +5896,7 @@ function setSession(user) {
 // 根據使用者的 allowedPages 顯示/隱藏頁籤
 function applyPagePermissions(user) {
   ALL_PAGES.forEach(({ id }) => {
-    // superadmin 或未設限（allowedPages 為 null/空）→ 全部顯示
-    const noRestriction = !user || user.role === 'superadmin'
-      || !user.allowedPages || user.allowedPages.length === 0;
-    const hidden = !(noRestriction || user.allowedPages.includes(id));
+    const hidden = !pageOpenFor(user, id);
     // 電腦版上方頁籤＋手機版底部導覽列一起處理（手機版原本沒藏，點了才跳「沒有權限」）
     ['nav-tab-', 'mob-tab-'].forEach(prefix => {
       const el = document.getElementById(prefix + id);
@@ -5990,10 +5992,7 @@ function updateMainBadges() {
 // Fetches all module data from the API into the in-memory cache. Called right
 // after authentication succeeds, and again whenever another device changed data.
 // 帳號看不到的頁面不抓（雲端會回「沒有權限」）；權限剛被改掉、還是被擋時也當成沒有資料，不要讓整個畫面載不起來
-function canSeePage(page) {
-  const u = _currentUser;
-  return !u || u.role === 'superadmin' || !u.allowedPages || !u.allowedPages.length || u.allowedPages.includes(page);
-}
+function canSeePage(page) { return pageOpenFor(_currentUser, page); }
 function pageList(page, path) {
   if (!canSeePage(page)) return Promise.resolve([]);
   return apiJson(path).catch(e => { if (e.status === 403) return []; throw e; });
@@ -6356,8 +6355,10 @@ function storePermSelectAll(checked, listId) {
 
 // 勾選框 → 權限清單（全部勾＝不限制＝null）
 function readPagesChecklist(containerId) {
-  const checked = [...document.querySelectorAll('#' + containerId + ' input[type=checkbox]:checked')].map(cb => cb.value);
-  return checked.length < ALL_PAGES.length ? checked : null;
+  const open = ALL_PAGES.filter(p => !SUPER_ONLY_PAGES.includes(p.id)).map(p => p.id);
+  const checked = [...document.querySelectorAll('#' + containerId + ' input[type=checkbox]:checked')].map(cb => cb.value)
+    .filter(id => open.includes(id));
+  return checked.length < open.length ? checked : null; // 開放的頁全勾＝不限制
 }
 // 勾了整個區域 → 存「區域:XX」（之後新增到這區的店號也看得到）；其餘個別勾的店號存店號
 function readStorePermList(listId) {
@@ -6381,9 +6382,10 @@ function readStorePermList(listId) {
 function renderPagesChecklist(containerId, allowed) {
   const el = document.getElementById(containerId);
   el.innerHTML = ALL_PAGES.map(p => {
-    const locked = p.id === 'dashboard';
-    const checked = locked || !allowed || !allowed.length || allowed.includes(p.id);
-    return `<label${locked ? ' class="locked"' : ''}><input type="checkbox" value="${p.id}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}> ${p.label}</label>`;
+    const superOnly = SUPER_ONLY_PAGES.includes(p.id);
+    const locked = p.id === 'dashboard' || superOnly;
+    const checked = !superOnly && (p.id === 'dashboard' || !allowed || !allowed.length || allowed.includes(p.id));
+    return `<label${locked ? ' class="locked"' : ''}${superOnly ? ' title="只開放給總管理員"' : ''}><input type="checkbox" value="${p.id}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}> ${p.label}${superOnly ? ' <span style="font-size:10px;color:var(--text-muted)">（僅總管理員）</span>' : ''}</label>`;
   }).join('');
 }
 
@@ -6395,8 +6397,8 @@ function getGroups() { return DB.get('groups'); }
 function findGroup(id) { return id ? getGroups().find(g => g.id === id) || null : null; }
 
 function pagesTags(pages) {
-  if (!pages || !pages.length) return '<span class="page-tag-all">全部開放</span>';
-  return pages.map(pid => { const pg = ALL_PAGES.find(p => p.id === pid); return pg ? `<span class="page-tag">${pg.label}</span>` : ''; }).join('');
+  if (!pages || !pages.length) return '<span class="page-tag-all">全部開放（總管理員專用頁除外）</span>';
+  return pages.filter(pid => !SUPER_ONLY_PAGES.includes(pid)).map(pid => { const pg = ALL_PAGES.find(p => p.id === pid); return pg ? `<span class="page-tag">${pg.label}</span>` : ''; }).join('');
 }
 function storesSummary(nos) {
   if (!nos || !nos.length) return '<span class="page-tag-all">全部店號</span>';
@@ -6496,7 +6498,7 @@ async function refreshOwnPermissions() {
   updateHeaderUser(me);
   const active = document.querySelector('.page.active');
   const page = active ? active.id.replace('page-', '') : 'dashboard';
-  if (me.role !== 'superadmin' && me.allowedPages && me.allowedPages.length && page !== 'users' && !me.allowedPages.includes(page)) {
+  if (page !== 'users' && !pageOpenFor(me, page)) {
     switchPage('dashboard');
   }
 }
@@ -6885,13 +6887,8 @@ function renderUsers() {
     let pagesCell;
     if (u.role === 'superadmin') {
       pagesCell = '<span class="page-tag-all">不限制</span>';
-    } else if (!u.allowedPages || u.allowedPages.length === 0) {
-      pagesCell = '<span class="page-tag-all">全部開放</span>';
     } else {
-      pagesCell = u.allowedPages.map(pid => {
-        const pg = ALL_PAGES.find(p => p.id === pid);
-        return pg ? `<span class="page-tag">${pg.label}</span>` : '';
-      }).join('');
+      pagesCell = pagesTags(u.allowedPages);
     }
 
     // ── 店號觀看權限欄 ──
@@ -7125,7 +7122,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'f880d1038a8e';
+const BUILD_ID = '12057fcb1292';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
