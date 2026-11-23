@@ -1892,7 +1892,7 @@
   body.mob-mode .mob-nav {
     height: auto; min-height: 0; align-items: stretch;
     /* iPhone 底部橫條、橫放時瀏海：留出安全區 */
-    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    padding: 0 env(safe-area-inset-right) max(env(safe-area-inset-bottom), var(--ios-home-pad, 0px)) env(safe-area-inset-left);
   }
   /* 手指好按：直放至少 56px 高；平板 52px；橫拿 44px */
   body.mob-mode .mob-tab { min-width: 0; flex: 1 1 0; padding: 8px 2px 7px; gap: 3px; min-height: 56px; }
@@ -3246,6 +3246,14 @@
 
 <script>
 // 把頁首、頁籤和各頁內容包進同一個區塊：手機版只有這個區塊會捲動（見 #appScroll 樣式），電腦版看起來跟原本一樣
+// iPhone（有底部橫條的機型）主畫面 App：保證導覽列下面至少留出底部橫條的空間，就算系統沒回報安全區也一樣
+(function iosHomeBarPad() {
+  try {
+    const ios = /iphone|ipod/i.test(navigator.userAgent);
+    const standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    if (ios && standalone && Math.max(screen.width, screen.height) >= 812) document.documentElement.style.setProperty('--ios-home-pad', '26px');
+  } catch {}
+})();
 (function wrapAppScroll() {
   if (document.getElementById('appScroll')) return;
   const wrap = document.createElement('div');
@@ -6282,14 +6290,11 @@ async function doRegister() {
 
 // iPhone 打字時如果畫面被放大，登入後會一直維持放大、左右被切掉：登入後把畫面縮回剛好符合螢幕
 function resetPageZoom() {
+  // 只收起鍵盤。不要再動 viewport 設定：iPhone 主畫面 App 被改過 viewport 之後，
+  // 會忘記「畫面延伸到底部橫條」（viewport-fit=cover），導覽列跑位、被底部橫條壓到。
+  // 登入框字體已經是 16px，iPhone 本來就不會自動放大。
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  const meta = document.querySelector('meta[name="viewport"]');
-  if (meta) {
-    const orig = meta.getAttribute('content');
-    meta.setAttribute('content', orig + ', maximum-scale=1');
-    setTimeout(() => meta.setAttribute('content', orig), 400); // 還原，之後仍可用兩指放大
-  }
-  window.scrollTo(0, window.scrollY);
+  window.scrollTo(0, 0);
 }
 
 async function doLogin() {
@@ -7327,7 +7332,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'ff47fcf8301d';
+const BUILD_ID = '34e0beb17f4d';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
