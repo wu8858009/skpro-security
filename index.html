@@ -6065,6 +6065,43 @@ function fitMobileNav() {
 window.addEventListener('resize', fitMobileNav);
 window.addEventListener('orientationchange', () => setTimeout(fitMobileNav, 200));
 
+// ── 導覽列永遠貼在畫面最下方 ──
+// iPhone 主畫面 App 偶爾會讓「固定在底部」的導覽列浮在半空中（鍵盤收起後、或系統算的畫面高度和實際看到的不一致）。
+// 用實際看得到的範圍（visualViewport）量出差距，把導覽列推回最底下；鍵盤收起時也強制重新排一次。
+function pinMobileNav() {
+  const nav = document.getElementById('mobNav');
+  if (!nav) return;
+  const vv = window.visualViewport;
+  if (!vv || !document.body.classList.contains('mob-mode')) { nav.style.transform = ''; return; }
+  const a = document.activeElement;
+  const typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable);
+  if (typing && vv.height < window.innerHeight * 0.8) { nav.style.transform = ''; return; } // 鍵盤開著：不要跟著跑到鍵盤上
+  const gap = Math.round(vv.height + vv.offsetTop - window.innerHeight);
+  nav.style.transform = Math.abs(gap) > 1 ? `translateY(${gap}px)` : '';
+}
+let _pinRaf = 0;
+function schedulePinMobileNav() {
+  cancelAnimationFrame(_pinRaf);
+  _pinRaf = requestAnimationFrame(pinMobileNav);
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', schedulePinMobileNav);
+  window.visualViewport.addEventListener('scroll', schedulePinMobileNav);
+}
+window.addEventListener('scroll', schedulePinMobileNav, { passive: true });
+window.addEventListener('resize', schedulePinMobileNav);
+window.addEventListener('pageshow', schedulePinMobileNav);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(schedulePinMobileNav, 100); });
+// 鍵盤收起：iPhone 有時不會把固定在底部的東西放回去，捲動一下讓它重新排版
+document.addEventListener('focusout', () => setTimeout(() => {
+  const a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return;
+  window.scrollTo(window.scrollX, window.scrollY);
+  const nav = document.getElementById('mobNav');
+  if (nav) { nav.style.display = 'none'; void nav.offsetHeight; nav.style.display = ''; } // 強制重畫
+  schedulePinMobileNav();
+}, 120));
+
 function clearSession() {
   _currentUser = null;
   localStorage.removeItem(_ACTIVITY_KEY);
@@ -7297,7 +7334,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'f7cf5fbb5112';
+const BUILD_ID = 'b7634e00705a';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
