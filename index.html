@@ -732,6 +732,15 @@
   .nav-tab.tab-perm-hidden { display: none !important; }
 
   /* ── System Settings Card ── */
+  .imp-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--mob-nav-h, 0px) + 14px + env(safe-area-inset-bottom, 0px));
+    z-index: 9000; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 999px;
+    background: #2b1d00; border: 1px solid var(--accent); color: #ffe7a3; font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.5);
+    max-width: calc(100vw - 24px); white-space: nowrap; }
+  .imp-bar span { overflow: hidden; text-overflow: ellipsis; }
+  .imp-bar b { color: #fff; }
+  /* 不用 .btn-primary：檢視員畫面會把那類按鈕藏起來 */
+  .imp-bar .imp-back { flex-shrink: 0; border: none; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 700;
+    cursor: pointer; color: #0a1628; background: linear-gradient(135deg, var(--accent), var(--accent-light)); font-family: inherit; }
   .cont-hint { font-size: 12px; color: #81e6d9; background: rgba(56,178,172,0.10); border: 1px solid rgba(56,178,172,0.3);
     border-radius: 6px; padding: 7px 10px; margin-bottom: 12px; }
   .cont-checks { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 4px 0 14px; }
@@ -3255,14 +3264,33 @@ const CLOUD_TOKEN_KEY = 'skpro_cloud_token';
 function cloudToken() {
   try { return sessionStorage.getItem(CLOUD_TOKEN_KEY) || localStorage.getItem(CLOUD_TOKEN_KEY) || ''; } catch { return ''; }
 }
+// 總管理員「切換成別人的帳號」時：別人的權杖只放在這次開啟（sessionStorage），
+// 總管理員自己的登入原封不動保留，返回時換回來；關掉 App 也會自動回到總管理員
+const IMPERSONATOR_KEY = 'skpro_impersonator';
+function impersonator() {
+  try { return JSON.parse(sessionStorage.getItem(IMPERSONATOR_KEY) || 'null'); } catch { return null; }
+}
+function restoreImpersonator() {
+  const imp = impersonator();
+  if (!imp) return false;
+  try {
+    sessionStorage.removeItem(IMPERSONATOR_KEY);
+    sessionStorage.removeItem(CLOUD_TOKEN_KEY);
+    if (!imp.remember && imp.token) sessionStorage.setItem(CLOUD_TOKEN_KEY, imp.token); // 總管理員原本沒勾記住我
+  } catch {}
+  return true;
+}
 function setCloudToken(token, remember) {
   try {
+    if (impersonator()) { sessionStorage.setItem(CLOUD_TOKEN_KEY, token); return; }
     if (remember === undefined) remember = !!localStorage.getItem(CLOUD_TOKEN_KEY) && !sessionStorage.getItem(CLOUD_TOKEN_KEY);
     sessionStorage.removeItem(CLOUD_TOKEN_KEY); localStorage.removeItem(CLOUD_TOKEN_KEY);
     (remember ? localStorage : sessionStorage).setItem(CLOUD_TOKEN_KEY, token);
   } catch {}
 }
 function clearCloudToken() {
+  // 切換中的帳號登出或失效（例如剛被停權）：回到總管理員，不要把總管理員也登出
+  if (restoreImpersonator()) { setTimeout(() => location.reload(), 300); return; }
   try { sessionStorage.removeItem(CLOUD_TOKEN_KEY); localStorage.removeItem(CLOUD_TOKEN_KEY); } catch {}
 }
 function blobToBase64(blob) {
@@ -5717,7 +5745,7 @@ async function renderLoginLog() {
   let log = [];
   try { log = await apiJson('/logs/login'); } catch {}
   if (!log.length) { el.innerHTML = '<div class="ll-item" style="color:var(--text-muted)">尚無登入紀錄</div>'; return; }
-  const actionLabel = { login:'登入', logout:'登出', failed:'失敗', locked:'鎖定', expired:'到期', time_restricted:'時段限制' };
+  const actionLabel = { login:'登入', logout:'登出', failed:'失敗', locked:'鎖定', expired:'到期', time_restricted:'時段限制', impersonate:'代登' };
   el.innerHTML = log.map(e =>
     `<div class="ll-item">
       <span class="ll-ts">${escHtml(e.ts)}</span>
@@ -6082,6 +6110,7 @@ async function afterAuthenticated(user) {
   startSessionWatcher();
   setTimeout(maybeShowInstallBar, 1500);
   setTimeout(migrateLocalSvOrder, 2500);
+  showImpersonationBar();
 }
 
 // 頁籤上的筆數（登入後、以及同步到其他裝置的變更後更新）
@@ -6265,7 +6294,44 @@ async function doLogin() {
   }
 }
 
+// ── 總管理員切換帳號 ──
+async function impersonateUser(id) {
+  const target = DB.get('users').find(u => u.id === id);
+  const me = getCurrentUser();
+  if (!target || !me) return;
+  const name = target.displayName || target.username;
+  if (!confirm(`切換成「${name}」（${target.username}）的帳號？\n\n會看到他的畫面和權限，不用輸入密碼。\n畫面下方按「返回總管理員」就能切回來。`)) return;
+  let res;
+  try { res = await apiJson(`/users/${id}/impersonate`, { method: 'POST' }); }
+  catch (e) { toast(e.message || '切換失敗', 'error'); return; }
+  try {
+    // 要在呼叫之後才讀：這次呼叫可能剛幫總管理員換發了新權杖
+    const remember = !!localStorage.getItem(CLOUD_TOKEN_KEY) && !sessionStorage.getItem(CLOUD_TOKEN_KEY);
+    sessionStorage.setItem(IMPERSONATOR_KEY, JSON.stringify({ token: cloudToken(), remember, name: me.displayName || me.username, target: name }));
+    sessionStorage.setItem(CLOUD_TOKEN_KEY, res.token);
+  } catch { toast('這個瀏覽器無法切換帳號', 'error'); return; }
+  location.reload();
+}
+function returnToAdmin() {
+  restoreImpersonator();
+  location.reload();
+}
+function showImpersonationBar() {
+  const imp = impersonator();
+  let bar = document.getElementById('impBar');
+  if (!imp) { if (bar) bar.remove(); return; }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'impBar';
+    bar.className = 'imp-bar';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML = `<span>👁 目前是「<b></b>」的畫面</span><button class="imp-back" onclick="returnToAdmin()">返回總管理員</button>`;
+  bar.querySelector('b').textContent = imp.target || '其他帳號';
+}
+
 async function logout(silent) {
+  if (impersonator()) { returnToAdmin(); return; }
   try { await apiJson('/auth/logout', { method: 'POST' }); } catch (e) { console.error(e); }
   clearSession();
   _cache = {};
@@ -6982,6 +7048,7 @@ function renderUsers() {
     } else {
       actions = `<button class="btn btn-sm" onclick="openUserModal(${u.id})" title="編輯">✏️</button>
                  <button class="btn btn-sm" onclick="cloneUser(${u.id})" title="複製帳號">📋</button>
+                 ${currentUser && currentUser.role === 'superadmin' && !isSelf && u.role !== 'superadmin' && !isBlocked && CLOUD_URL ? `<button class="btn btn-sm" onclick="impersonateUser(${u.id})" title="切換成這個帳號（不用密碼）">👁 切換</button>` : ''}
                  ${isLocked ? `<button class="btn btn-sm btn-success" onclick="unlockUser(${u.id})" title="解鎖帳號">🔓</button>` : ''}
                  ${u.role !== 'superadmin' && !isSelf ? `<button class="btn btn-sm ${isBlocked ? 'btn-success' : 'btn-danger'}" onclick="toggleUserEnabled(${u.id})" title="${isBlocked ? '恢復登入權限' : '停權（禁止登入）'}" style="font-size:11px;padding:3px 8px;">${isBlocked ? '▶ 復權' : '⏸ 停權'}</button>` : ''}
                  <button class="btn btn-sm btn-warning" onclick="forcePasswordResetUser(${u.id})" title="強制重設密碼">🔑</button>
@@ -7230,7 +7297,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '1d69335ae142';
+const BUILD_ID = 'f7cf5fbb5112';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
