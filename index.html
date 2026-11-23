@@ -1931,6 +1931,13 @@
   /* 橫放時左右瀏海 */
   body.mob-mode .header { padding-left: calc(10px + env(safe-area-inset-left)); padding-right: calc(10px + env(safe-area-inset-right)); }
   body.mob-mode .container { padding-left: calc(12px + env(safe-area-inset-left)) !important; padding-right: calc(12px + env(safe-area-inset-right)) !important; }
+  /* 手機版 App 排版：最外層不捲動，只有 #appScroll 捲動；導覽列在它下面，不會再浮起來 */
+  html:has(body.mob-mode) { height: 100%; overflow: hidden; }
+  body.mob-mode { position: fixed; inset: 0; overflow: hidden; height: 100%; width: 100%; }
+  body.mob-mode #appScroll { position: absolute; top: 0; left: 0; right: 0; bottom: var(--mob-nav-h, 64px);
+    overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+  body.mob-mode .mob-nav { position: absolute; bottom: 0; transform: none !important; }
+  body.mob-mode #appScroll .container { padding-bottom: 20px !important; }
 
   /* 設計圖：一欄大圖 */
   body.mob-mode .blueprint-grid { grid-template-columns: 1fr; gap: 12px; }
@@ -3238,6 +3245,17 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
+// 把頁首、頁籤和各頁內容包進同一個區塊：手機版只有這個區塊會捲動（見 #appScroll 樣式），電腦版看起來跟原本一樣
+(function wrapAppScroll() {
+  if (document.getElementById('appScroll')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'appScroll';
+  const header = document.querySelector('body > header.header');
+  document.body.insertBefore(wrap, header);
+  [header, document.querySelector('body > nav.nav-tabs'), ...document.querySelectorAll('body > .page')]
+    .filter(Boolean).forEach(el => wrap.appendChild(el));
+})();
+
 // ══════════════════════════════════════════
 //  DATA STORE
 // ══════════════════════════════════════════
@@ -6065,42 +6083,17 @@ function fitMobileNav() {
 window.addEventListener('resize', fitMobileNav);
 window.addEventListener('orientationchange', () => setTimeout(fitMobileNav, 200));
 
-// ── 導覽列永遠貼在畫面最下方 ──
-// iPhone 主畫面 App 偶爾會讓「固定在底部」的導覽列浮在半空中（鍵盤收起後、或系統算的畫面高度和實際看到的不一致）。
-// 用實際看得到的範圍（visualViewport）量出差距，把導覽列推回最底下；鍵盤收起時也強制重新排一次。
-function pinMobileNav() {
-  const nav = document.getElementById('mobNav');
-  if (!nav) return;
-  const vv = window.visualViewport;
-  if (!vv || !document.body.classList.contains('mob-mode')) { nav.style.transform = ''; return; }
-  const a = document.activeElement;
-  const typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable);
-  if (typing && vv.height < window.innerHeight * 0.8) { nav.style.transform = ''; return; } // 鍵盤開著：不要跟著跑到鍵盤上
-  const gap = Math.round(vv.height + vv.offsetTop - window.innerHeight);
-  nav.style.transform = Math.abs(gap) > 1 ? `translateY(${gap}px)` : '';
-}
-let _pinRaf = 0;
-function schedulePinMobileNav() {
-  cancelAnimationFrame(_pinRaf);
-  _pinRaf = requestAnimationFrame(pinMobileNav);
-}
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', schedulePinMobileNav);
-  window.visualViewport.addEventListener('scroll', schedulePinMobileNav);
-}
-window.addEventListener('scroll', schedulePinMobileNav, { passive: true });
-window.addEventListener('resize', schedulePinMobileNav);
-window.addEventListener('pageshow', schedulePinMobileNav);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(schedulePinMobileNav, 100); });
-// 鍵盤收起：iPhone 有時不會把固定在底部的東西放回去，捲動一下讓它重新排版
+// ── 手機版：畫面本身不捲動，內容在自己的區塊裡捲，導覽列固定在下面 ──
+// iPhone 主畫面 App 在「整頁捲動＋固定在底部的導覽列」時，常把導覽列畫在半空中（登入、鍵盤收起之後最常見），
+// 量也量不出差距，所以手機版改成 App 的排版：最外層不捲動，就不會有這個問題。
+// 鍵盤收起後 iPhone 有時會把整個畫面往上推一點不放回來：放回最上面。
 document.addEventListener('focusout', () => setTimeout(() => {
+  if (!document.body.classList.contains('mob-mode')) return;
   const a = document.activeElement;
   if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return;
-  window.scrollTo(window.scrollX, window.scrollY);
-  const nav = document.getElementById('mobNav');
-  if (nav) { nav.style.display = 'none'; void nav.offsetHeight; nav.style.display = ''; } // 強制重畫
-  schedulePinMobileNav();
+  if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
 }, 120));
+function pinMobileNav() {} // 舊名稱保留給其他地方呼叫
 
 function clearSession() {
   _currentUser = null;
@@ -7334,7 +7327,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'b7634e00705a';
+const BUILD_ID = 'ff47fcf8301d';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
