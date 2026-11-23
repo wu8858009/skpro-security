@@ -1932,8 +1932,10 @@
   body.mob-mode .header { padding-left: calc(10px + env(safe-area-inset-left)); padding-right: calc(10px + env(safe-area-inset-right)); }
   body.mob-mode .container { padding-left: calc(12px + env(safe-area-inset-left)) !important; padding-right: calc(12px + env(safe-area-inset-right)) !important; }
   /* 手機版 App 排版：最外層不捲動，只有 #appScroll 捲動；導覽列在它下面，不會再浮起來 */
-  html:has(body.mob-mode) { height: 100%; overflow: hidden; }
-  body.mob-mode { position: fixed; inset: 0; overflow: hidden; height: 100%; width: 100%; }
+  /* 高度用程式量到的「實際看得到的高度」（--app-h）：iPhone 主畫面 App 的 100% 有時比畫面高，導覽列會被切到畫面外 */
+  html:has(body.mob-mode) { height: var(--app-h, 100dvh); overflow: hidden; }
+  body.mob-mode { position: fixed; top: 0; left: 0; right: 0; bottom: auto; overflow: hidden;
+    height: var(--app-h, 100dvh); min-height: 0 !important; max-height: var(--app-h, 100dvh); width: 100%; }
   body.mob-mode #appScroll { position: absolute; top: 0; left: 0; right: 0; bottom: var(--mob-nav-h, 64px);
     overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
   body.mob-mode .mob-nav { position: absolute; bottom: 0; transform: none !important; }
@@ -3254,6 +3256,18 @@
     if (ios && standalone && Math.max(screen.width, screen.height) >= 812) document.documentElement.style.setProperty('--ios-home-pad', '26px');
   } catch {}
 })();
+// 量實際看得到的畫面高度給手機版排版用（轉向、視窗大小改變時重量；鍵盤開著時不量，免得版面被壓扁）
+function setAppHeight() {
+  const a = document.activeElement;
+  const typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT');
+  if (typing && window.visualViewport && window.visualViewport.height < window.innerHeight * 0.8) return;
+  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 250));
+window.addEventListener('pageshow', setAppHeight);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(setAppHeight, 100); });
 (function wrapAppScroll() {
   if (document.getElementById('appScroll')) return;
   const wrap = document.createElement('div');
@@ -7332,7 +7346,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '34e0beb17f4d';
+const BUILD_ID = 'adbdfc3f3122';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
