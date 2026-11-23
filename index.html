@@ -1766,6 +1766,21 @@
   }
   .cc-status-badge.active { background: rgba(56,161,105,0.2); color: #68d391; border: 1px solid rgba(56,161,105,0.4); }
   .cc-status-badge.inactive { background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border); }
+  /* ══ 緊急聯絡人依螢幕大小自動排版 ══
+     寬螢幕（1280 以上）：完整表格；中等寬度（小筆電、平板、窄視窗）：卡片排 2～3 欄，每個欄位都看得到；
+     手機：卡片一欄，橫拿或平板直立時兩欄 */
+  #page-contacts .contacts-mobile-list .contact-card { margin-bottom: 0; display: flex; flex-direction: column; }
+  #page-contacts .contacts-mobile-list .cc-body { flex: 1; }
+  #page-contacts .contacts-mobile-list .no-data { grid-column: 1 / -1; }
+  @media (max-width: 1279px) {
+    body:not(.mob-mode) #page-contacts .table-wrap { display: none !important; }
+    body:not(.mob-mode) #page-contacts .contacts-mobile-list { display: grid !important; margin-top: 12px; gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+  }
+  body.mob-mode #page-contacts .contacts-mobile-list { display: grid !important; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 680px) {
+    body.mob-mode #page-contacts .contacts-mobile-list { grid-template-columns: 1fr 1fr; }
+  }
 
   /* 防護設計圖 */
   .blueprint-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 16px; padding: 4px 0 24px; }
@@ -7395,7 +7410,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '7e96bcd25011';
+const BUILD_ID = 'bb2be5f7c944';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
