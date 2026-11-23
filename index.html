@@ -3751,7 +3751,10 @@ function renderContacts() {
     const avatarEl = c.photo
       ? `<img src="${c.photo}" class="contact-photo" onclick="viewPhotoById(${c.id})">`
       : `<div class="avatar" style="background:${col}22;color:${col}">${c.name.charAt(0)}</div>`;
-    const storeBadges = cStoreNos.map(no => `<span class="store-tag" onclick="filterContactsByStore('${no}')">${no}</span>`).join('');
+    // 跟電腦版一樣：一顆按鈕，點開彈跳視窗看全部負責店號
+    const storeBadges = cStoreNos.length
+      ? `<button class="cs-btn" onclick="showContactStores(${c.id})">🏪 ${cStoreNos.length === 1 ? `<span class="cs-first">${cStoreNos[0]}</span>` : `${cStoreNos.length} 間店號`}</button>`
+      : '';
     const bdLine = c.birthday ? `🎂 ${c.birthday}${age!==null?` · ${age}歲`:''}${z.zodiac?' · '+z.zodiac:''}${z.chineseZodiac?' · '+z.chineseZodiac:''}` : '';
     return `<div class="contact-card" style="${isPrimary?'border-color:rgba(255,200,0,0.4);background:rgba(255,200,0,0.03)':''}">
       <div class="cc-head">
@@ -7392,7 +7395,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'eda6a282649d';
+const BUILD_ID = '7e96bcd25011';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
