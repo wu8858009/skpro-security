@@ -2237,7 +2237,7 @@
         </h3>
         <div id="dashAnnouncements"><p style="color:var(--text-muted);font-size:13px;">載入中...</p></div>
       </div>
-      <div class="dash-card">
+      <div class="dash-card dash-birthdays" style="display:none">
         <h3>🎂 本週生日提醒</h3>
         <div id="dashBirthdays"></div>
       </div>
@@ -4024,7 +4024,9 @@ function renderDashboard() {
   document.getElementById('dashAlerts').innerHTML = alerts.map(a =>
     `<div class="alert-item ${a.cls}">${a.icon} ${a.text}</div>`).join('');
 
-  // ── 本週生日提醒 ──
+  // ── 本週生日提醒（只給總管理員，其他帳號整塊不顯示）──
+  const bdBox = document.querySelector('#page-dashboard .dash-birthdays');
+  if (bdBox) bdBox.style.display = (_currentUser && _currentUser.role === 'superadmin') ? '' : 'none';
   const activeContacts = contacts.filter(c => c.status === 'active' || !c.status);
   const birthdayList = activeContacts.map(c => {
     const days = birthdayDaysLeft(c.birthday, today);
@@ -7420,7 +7422,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '51fda38c84cb';
+const BUILD_ID = '01d5a122c7b2';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
