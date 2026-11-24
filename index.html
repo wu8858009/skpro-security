@@ -732,6 +732,68 @@
   .nav-tab.tab-perm-hidden { display: none !important; }
 
   /* ── System Settings Card ── */
+  /* ══ 管理中心（帳號管理頁的分頁）══ */
+  .adm-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .adm-tab { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 7px 14px;
+    font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .adm-tab.active { background: var(--accent); border-color: var(--accent); color: #1a1200; font-weight: 700; }
+  .adm-tab .adm-cnt { background: var(--red); color: #fff; border-radius: 999px; font-size: 11px; padding: 0 7px; line-height: 18px; }
+  .adm-tab .adm-cnt:empty { display: none; }
+  .adm-sec { display: none; }
+  .adm-sec.active { display: block; }
+  .adm-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .adm-toolbar .hint { font-size: 12px; color: var(--text-muted); }
+  .adm-empty { color: var(--text-muted); font-size: 13px; padding: 24px; text-align: center; border: 1px dashed var(--border); border-radius: 12px; }
+  .adm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .adm-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .adm-card h4 { margin: 0 0 6px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .adm-card .meta { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+  .adm-card .row-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .online-dot { width: 9px; height: 9px; border-radius: 50%; background: #48bb78; box-shadow: 0 0 0 3px rgba(72,187,120,.2); flex-shrink: 0; }
+  .online-dot.off { background: #718096; box-shadow: none; }
+  .dev-line { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .dev-line b { color: var(--text); font-weight: 600; }
+  .diff-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  .diff-table th, .diff-table td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; vertical-align: top; word-break: break-all; }
+  .diff-table th { background: var(--surface2); color: var(--text-muted); font-weight: 600; width: 26%; }
+  .diff-table .d-old { color: #fc8181; text-decoration: line-through; }
+  .diff-table .d-new { color: #68d391; font-weight: 600; }
+  .appr-status { font-size: 11px; border-radius: 999px; padding: 1px 8px; font-weight: 700; }
+  .appr-status.pending { background: rgba(214,158,46,.18); color: var(--yellow); }
+  .appr-status.approved { background: rgba(72,187,120,.18); color: #68d391; }
+  .appr-status.rejected { background: rgba(229,62,62,.18); color: #fc8181; }
+  .appr-settings { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; }
+  .appr-settings label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .act-changes { margin-top: 4px; }
+  .act-changes summary { cursor: pointer; font-size: 12px; color: var(--accent-light); }
+  .rpt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .rpt-num { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .rpt-num .n { font-size: 24px; font-weight: 800; color: var(--accent-light); }
+  .rpt-num .l { font-size: 12px; color: var(--text-muted); }
+  .rpt-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .rpt-block h4 { margin: 0 0 8px; font-size: 15px; }
+  .rpt-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 5px 0; }
+  .rpt-bar .nm { width: 110px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rpt-bar .bar { height: 10px; border-radius: 5px; background: var(--accent); min-width: 2px; }
+  .rpt-bar .ct { color: var(--text-muted); font-size: 12px; }
+  .alert-chip { display: block; font-size: 12px; border-radius: 8px; padding: 4px 8px; margin-top: 5px; background: rgba(229,62,62,.12); color: #fc8181; }
+  .ok-chip { display: inline-block; font-size: 12px; color: #68d391; margin-top: 6px; }
+  .batch-bar { display: none; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(214,158,46,.12); border: 1px solid var(--accent);
+    border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; font-size: 13px; }
+  .batch-bar.show { display: flex; }
+  .ub-chk { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; cursor: pointer; }
+  .aud-box { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .aud-box .aud-title { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+  .aud-box .aud-items { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .aud-box label { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+  .annc-aud { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+  .annc-aud .rd { color: #68d391; cursor: pointer; text-decoration: underline dotted; }
+  .annc-unread { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; display: none; }
+  .annc-unread.show { display: block; }
+  @media print { .adm-tabs, .adm-toolbar .btn, .adm-toolbar input { display: none !important; } }
+  .pdf-sheet .adm-tabs, .pdf-sheet .batch-bar { display: none !important; }
   .imp-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--mob-nav-h, 0px) + 14px + env(safe-area-inset-bottom, 0px));
     z-index: 9000; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 999px;
     background: #2b1d00; border: 1px solid var(--accent); color: #ffe7a3; font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.5);
@@ -2805,6 +2867,10 @@
             <option value="info">🔵 資訊（藍色）</option>
           </select>
         </div>
+        <div class="form-group full">
+          <label class="form-label">指定給誰看（都不勾＝所有人）</label>
+          <div class="aud-box" id="anncAudience"></div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2936,6 +3002,59 @@
         <button class="btn btn-primary" onclick="openUserModal()">＋ 新增帳號</button>
       </div>
     </div>
+    <div class="adm-tabs" id="admTabs">
+      <button class="adm-tab active" data-tab="accounts" onclick="switchAdmTab('accounts')">👤 帳號與權限</button>
+      <button class="adm-tab" data-tab="online" onclick="switchAdmTab('online')">🟢 目前誰在線上</button>
+      <button class="adm-tab" data-tab="approvals" onclick="switchAdmTab('approvals')">⏳ 待核准 <span class="adm-cnt" id="admApprCnt"></span></button>
+      <button class="adm-tab" data-tab="report" onclick="switchAdmTab('report')">📈 月報統計</button>
+      <button class="adm-tab" data-tab="analysis" onclick="switchAdmTab('analysis')">🔍 帳號使用分析</button>
+    </div>
+
+    <!-- ══ 線上人員 ══ -->
+    <div class="adm-sec" id="adm-online">
+      <div class="adm-toolbar">
+        <button class="btn btn-outline btn-sm" onclick="renderPresence(true)">🔄 重新整理</button>
+        <span class="hint">畫面開著的裝置每 8 秒回報一次；2 分鐘內有回報算「在線上」。按「強制登出」會讓那個帳號所有裝置立刻登出。</span>
+      </div>
+      <div class="adm-grid" id="presenceList"><div class="adm-empty">載入中…</div></div>
+    </div>
+
+    <!-- ══ 待核准 ══ -->
+    <div class="adm-sec" id="adm-approvals">
+      <div class="appr-settings">
+        <b>其他帳號修改要先經你核准：</b>
+        <label><input type="checkbox" id="apprCards" onchange="saveApprovalSettings()"> 💳 保全卡號（新增／修改／刪除）</label>
+        <label><input type="checkbox" id="apprKeys" onchange="saveApprovalSettings()"> 🗝️ 鑰匙（新增／修改／借出／歸還／刪除）</label>
+      </div>
+      <div class="adm-toolbar">
+        <select class="form-select" id="apprFilter" style="width:auto" onchange="renderApprovals()">
+          <option value="pending">只看待核准</option>
+          <option value="all">全部（含已處理）</option>
+        </select>
+      </div>
+      <div class="adm-grid" id="approvalList"></div>
+    </div>
+
+    <!-- ══ 月報 ══ -->
+    <div class="adm-sec" id="adm-report">
+      <div class="adm-toolbar">
+        <input class="form-input" type="month" id="rptMonth" style="width:auto" onchange="renderReport()">
+        <button class="btn btn-outline btn-sm" onclick="renderReport()">🔄 重新統計</button>
+        <button class="btn btn-primary btn-sm" onclick="printPage('users')">🖨️ 列印／PDF</button>
+      </div>
+      <div id="reportBody"><div class="adm-empty">選擇月份後顯示統計</div></div>
+    </div>
+
+    <!-- ══ 帳號使用分析 ══ -->
+    <div class="adm-sec" id="adm-analysis">
+      <div class="adm-toolbar">
+        <button class="btn btn-outline btn-sm" onclick="renderAnalysis()">🔄 重新分析</button>
+        <span class="hint">依近 30 天的登入紀錄分析；有異常（深夜登入、新裝置、密碼一直錯）的帳號排在最前面。</span>
+      </div>
+      <div class="adm-grid" id="analysisList"><div class="adm-empty">載入中…</div></div>
+    </div>
+
+    <div class="adm-sec active" id="adm-accounts">
     <!-- 🧩 權限群組 -->
     <div class="perm-groups-card" id="permGroupsCard">
       <div class="pg-head">
@@ -2947,11 +3066,16 @@
       </div>
       <div class="pg-grid" id="groupsGrid"></div>
     </div>
+    <div class="batch-bar" id="batchBar">
+      <span>已勾選 <b id="batchCount">0</b> 個帳號</span>
+      <button class="btn btn-primary btn-sm" onclick="openBatchModal()">⚙️ 批次調整權限</button>
+      <button class="btn btn-outline btn-sm" onclick="clearBatchSelection()">取消勾選</button>
+    </div>
     <div class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th><input type="checkbox" class="ub-chk" id="ubAll" onclick="toggleAllUsers(this.checked)" title="全選">#</th>
             <th>帳號</th>
             <th>姓名</th>
             <th>角色</th>
@@ -3045,7 +3169,41 @@
         <div class="login-log-feed" id="loginLogFeed"></div>
       </div>
     </div>
+    </div><!-- /adm-accounts -->
 
+  </div>
+</div>
+
+<!-- 批次調整權限 -->
+<div class="modal-overlay" id="modalBatch">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h3>⚙️ 批次調整權限</h3>
+      <button class="modal-close" onclick="closeModal('modalBatch')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px">套用到 <b id="batchWho"></b>。只會改有勾「要調整」的項目，其他保持原樣。總管理員帳號不會被改。</p>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label"><input type="checkbox" id="bt_useGroup"> 要調整：權限群組</label>
+        <select class="form-select" id="bt_group"></select>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label"><input type="checkbox" id="bt_useExpiry"> 要調整：帳號到期日（空白＝不到期）</label>
+        <input class="form-input" type="date" id="bt_expiry">
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label"><input type="checkbox" id="bt_useTime"> 要調整：可登入時段（空白＝不限）</label>
+        <div style="display:flex;gap:8px;align-items:center"><input class="form-input" type="time" id="bt_tStart"> ～ <input class="form-input" type="time" id="bt_tEnd"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><input type="checkbox" id="bt_useEnabled"> 要調整：帳號狀態</label>
+        <select class="form-select" id="bt_enabled"><option value="1">▶ 啟用（可登入）</option><option value="0">⏸ 停權（立即登出、不能登入）</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalBatch')">取消</button>
+      <button class="btn btn-primary" onclick="saveBatch()">套用</button>
+    </div>
   </div>
 </div>
 
@@ -3552,6 +3710,15 @@ function reconcileCreated(cacheKey, tempId, serverObj) {
   resolveCloudFiles();
 }
 
+// 雲端回 202：其他帳號的修改要等總管理員核准，畫面換回雲端上目前的資料
+function onPendingApproval(r) {
+  toast((r && r.message) || '已送出，等總管理員核准後才會生效', 'warning');
+  clearTimeout(_resyncTimer);
+  _resyncTimer = setTimeout(async () => {
+    try { await loadAllData(); updateMainBadges(); refreshCurrentPage(); } catch (e) { console.warn('重新載入失敗', e); }
+  }, 400);
+}
+
 async function syncEntityArray(endpoint, cacheKey, prevArr, nextArr) {
   if (!Array.isArray(prevArr) || !Array.isArray(nextArr)) return;
   const prevById = new Map(prevArr.map(x => [x.id, x]));
@@ -3559,7 +3726,10 @@ async function syncEntityArray(endpoint, cacheKey, prevArr, nextArr) {
 
   for (const id of prevById.keys()) {
     if (!nextById.has(id)) {
-      try { await apiJson(`/${endpoint}/${id}`, { method: 'DELETE' }); } catch (e) { onSyncError(e); }
+      try {
+        const r = await apiJson(`/${endpoint}/${id}`, { method: 'DELETE' });
+        if (r && r.pending) onPendingApproval(r);
+      } catch (e) { onSyncError(e); }
     }
   }
   for (const [id, obj] of nextById) {
@@ -3567,9 +3737,11 @@ async function syncEntityArray(endpoint, cacheKey, prevArr, nextArr) {
     try {
       if (!before) {
         const saved = await apiJson(`/${endpoint}`, { method: 'POST', body: JSON.stringify(toApiPayload(endpoint, obj)) });
-        reconcileCreated(cacheKey, id, fromApiEntity(endpoint, saved));
+        if (saved && saved.pending) onPendingApproval(saved);
+        else reconcileCreated(cacheKey, id, fromApiEntity(endpoint, saved));
       } else if (JSON.stringify(toApiPayload(endpoint, before)) !== JSON.stringify(toApiPayload(endpoint, obj))) {
-        await apiJson(`/${endpoint}/${id}`, { method: 'PUT', body: JSON.stringify(toApiPayload(endpoint, obj)) });
+        const r = await apiJson(`/${endpoint}/${id}`, { method: 'PUT', body: JSON.stringify(toApiPayload(endpoint, obj)) });
+        if (r && r.pending) onPendingApproval(r);
       }
     } catch (e) { onSyncError(e); }
   }
@@ -3678,7 +3850,7 @@ function switchPage(page) {
   if (page === 'storeview') renderStoreView();
   if (page === 'dashboard') renderDashboard();
   if (page === 'blueprints') renderBlueprints();
-  if (page === 'users') { renderUsers(); renderFieldReqSettings(); renderContinuousSettings(); loadSecurityPolicyUI(); }
+  if (page === 'users') { renderUsers(); renderFieldReqSettings(); renderContinuousSettings(); loadSecurityPolicyUI(); renderAdmTab(); }
 }
 
 // ══════════════════════════════════════════
@@ -4020,9 +4192,21 @@ function renderDashboard() {
   if (cardsExpired > 0) alerts.push({ cls: 'alert-warn', icon: '⚠️', text: `${cardsExpired} 張保全卡已過期，建議停用或補辦。` });
   if (nearExpCards > 0) alerts.push({ cls: 'alert-warn', icon: '⚡', text: `${nearExpCards} 張保全卡將在 30 天內到期。` });
   if (keysOut > 0) alerts.push({ cls: 'alert-info', icon: '📤', text: `${keysOut} 把鑰匙借出中，請確認歸還狀況。` });
+  {
+    const isSuper = _currentUser && _currentUser.role === 'superadmin';
+    const pend = pendingApprovals();
+    if (isSuper && pend.length) alerts.unshift({ cls: 'alert-warn', icon: '⏳', text: `有 ${pend.length} 筆修改等你核准`, go: "switchPage('users');switchAdmTab('approvals')" });
+    if (!isSuper && _currentUser) {
+      const mine = (_cache.approvals && _cache.approvals.items) || [];
+      if (pend.length) alerts.unshift({ cls: 'alert-info', icon: '⏳', text: `你有 ${pend.length} 筆修改正在等總管理員核准` });
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10).replace(/-/g, '/');
+      mine.filter(x => x.status === 'rejected' && (x.reviewedAt || '') >= weekAgo).slice(0, 3).forEach(x =>
+        alerts.unshift({ cls: 'alert-danger', icon: '↩️', text: `你${escHtml(x.actionLabel)}「${escHtml(x.label)}」的申請被退回${x.note ? '：' + escHtml(x.note) : ''}` }));
+    }
+  }
   if (!alerts.length) alerts.push({ cls: 'alert-info', icon: '✅', text: '目前無異常警示，所有紀錄正常。' });
   document.getElementById('dashAlerts').innerHTML = alerts.map(a =>
-    `<div class="alert-item ${a.cls}">${a.icon} ${a.text}</div>`).join('');
+    `<div class="alert-item ${a.cls}"${a.go ? ` style="cursor:pointer" onclick="${a.go}"` : ''}>${a.icon} ${a.text}</div>`).join('');
 
   // ── 本週生日提醒（只給總管理員，其他帳號整塊不顯示）──
   const bdBox = document.querySelector('#page-dashboard .dash-birthdays');
@@ -4157,6 +4341,7 @@ function renderAnnouncementsPanel() {
     el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:4px 0">目前無公告</p>';
     return;
   }
+  markAnncsRead(anncs);
   const prioClass = { high: 'prio-high', info: 'prio-info', normal: '' };
   const prioIcon  = { high: '🔴', info: '🔵', normal: '📌' };
   el.innerHTML = anncs.map(a => `
@@ -4166,12 +4351,57 @@ function renderAnnouncementsPanel() {
         <span class="annc-date">${a.createdAt}</span>
       </div>
       ${a.content ? `<div class="annc-body">${a.content}</div>` : ''}
+      ${anncAudienceLine(a)}
       <div class="annc-actions btn-admin-only">
         <button class="annc-btn" onclick="openAnncModal(${a.id})">編輯</button>
         <button class="annc-btn" style="color:var(--red)" onclick="deleteAnnc(${a.id})">刪除</button>
       </div>
     </div>
   `).join('');
+}
+
+// 公告對象與已讀（總管理員才拿得到 readers／unread）
+function anncAudienceLine(a) {
+  const isSuper = _currentUser && _currentUser.role === 'superadmin';
+  const labels = a.audienceLabels || [];
+  const parts = [];
+  if (isSuper || (a.audience && a.audience.length)) {
+    parts.push('👥 ' + (labels.length ? labels.map(escHtml).join('、') : (a.audience && a.audience.length ? '指定對象' : '所有人')));
+  }
+  if (isSuper && Array.isArray(a.readers)) {
+    const total = a.readers.length + (a.unread || []).length;
+    parts.push(`<span class="rd" onclick="this.closest('.announcement-item').querySelector('.annc-unread').classList.toggle('show')">已讀 ${a.readers.length}/${total}</span>`);
+  }
+  if (!parts.length) return '';
+  const unread = isSuper && Array.isArray(a.unread)
+    ? `<div class="annc-unread">✅ 已讀：${a.readers.length ? a.readers.map(escHtml).join('、') : '還沒有人'}<br>⏳ 未讀：${a.unread.length ? a.unread.map(escHtml).join('、') : '全部都讀了'}</div>` : '';
+  return `<div class="annc-aud">${parts.join('<span>・</span>')}</div>${unread}`;
+}
+// 其他帳號看到公告＝已讀（每則只回報一次）
+function markAnncsRead(anncs) {
+  if (!CLOUD_URL || !_currentUser || _currentUser.role === 'superadmin' || impersonator()) return;
+  const key = 'skpro_annc_read_' + _currentUser.id;
+  let done = [];
+  try { done = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+  anncs.filter(a => !done.includes(a.id)).forEach(a => {
+    apiJson(`/announcements/${a.id}/read`, { method: 'POST' }).then(() => {
+      done.push(a.id);
+      try { localStorage.setItem(key, JSON.stringify(done.slice(-300))); } catch {}
+    }).catch(() => {});
+  });
+}
+function renderAudiencePicker(selected) {
+  const box = document.getElementById('anncAudience');
+  const sel = new Set(selected || []);
+  const chk = (v, label) => `<label><input type="checkbox" value="${escHtml(v)}" ${sel.has(v) ? 'checked' : ''}> ${escHtml(label)}</label>`;
+  const groups = DB.get('groups');
+  const areas = storeAreas();
+  const users = DB.get('users').filter(u => u.role !== 'superadmin' && u.status === 'active');
+  let html = '';
+  if (groups.length) html += `<div><div class="aud-title">🧩 權限群組</div><div class="aud-items">${groups.map(g => chk('g:' + g.id, g.name)).join('')}</div></div>`;
+  if (areas.length) html += `<div><div class="aud-title">📍 區域（能看這個區域的帳號）</div><div class="aud-items">${areas.map(a => chk('a:' + a, a)).join('')}</div></div>`;
+  if (users.length) html += `<div><div class="aud-title">👤 個別帳號</div><div class="aud-items">${users.map(u => chk('u:' + u.id, u.displayName || u.username)).join('')}</div></div>`;
+  box.innerHTML = html || '<div class="aud-title">沒有可以指定的群組、區域或帳號，公告會給所有人看</div>';
 }
 
 function openAnncModal(id) {
@@ -4182,6 +4412,7 @@ function openAnncModal(id) {
   document.getElementById('annc_title').value    = a ? a.title    : '';
   document.getElementById('annc_content').value  = a ? a.content  : '';
   document.getElementById('annc_priority').value = a ? a.priority : 'normal';
+  renderAudiencePicker(a ? a.audience || [] : []);
   applyModuleFieldReq('annc');
   document.getElementById('modalAnnouncement').classList.add('open');
 }
@@ -4196,14 +4427,15 @@ function saveAnnouncement() {
   const content = document.getElementById('annc_content').value.trim();
   if (!validateModuleFields('annc', { title, content })) return;
   const priority = document.getElementById('annc_priority').value;
+  const audience = [...document.querySelectorAll('#anncAudience input:checked')].map(i => i.value);
   const anncs = DB.get('announcements');
   const dateStr = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
   if (editingAnncId) {
     const idx = anncs.findIndex(x => x.id === editingAnncId);
-    if (idx !== -1) anncs[idx] = { ...anncs[idx], title, content, priority };
+    if (idx !== -1) anncs[idx] = { ...anncs[idx], title, content, priority, audience };
   } else {
     const newId = anncs.length ? Math.max(...anncs.map(x => x.id)) + 1 : 1;
-    anncs.unshift({ id: newId, title, content, priority, createdAt: dateStr });
+    anncs.unshift({ id: newId, title, content, priority, audience, createdAt: dateStr });
   }
   DB.set('announcements', anncs);
   closeAnncModal();
@@ -4596,7 +4828,12 @@ function auditTag(r) {
 // ── Activity Log ──────────────────────────
 const ACT_KEY = 'skpro_activitylog';
 const ACT_ICONS = { create:'➕', update:'✏️', delete:'🗑️', action:'🔄' };
-const ACT_TYPE_LABEL = { contact:'聯絡人', card:'卡號', key:'鑰匙', store:'店號', user:'帳號' };
+const ACT_TYPE_LABEL = { contact:'聯絡人', card:'卡號', key:'鑰匙', store:'店號', user:'帳號', group:'權限群組', blueprint:'設計圖', setting:'設定' };
+// 修改前後對照表：[{ l: 欄位, a: 原本, b: 改成 }]
+function diffTable(changes) {
+  return `<table class="diff-table"><tr><th>欄位</th><th>原本</th><th>改成</th></tr>${changes.map(c =>
+    `<tr><th>${escHtml(c.l)}</th><td class="d-old">${escHtml(c.a) || '<span style="color:var(--text-muted);text-decoration:none">（空白）</span>'}</td><td class="d-new">${escHtml(c.b) || '<span style="color:var(--text-muted);font-weight:400">（空白）</span>'}</td></tr>`).join('')}</table>`;
+}
 function logActivity() {
   // No-op: the API now writes an ActivityLog row server-side for every
   // create/update/delete it handles, so the client no longer needs to.
@@ -4621,6 +4858,7 @@ async function renderActivityFeed() {
       <div class="activity-icon ${e.action}">${ACT_ICONS[e.action] || '•'}</div>
       <div class="activity-body">
         <div><span class="activity-actor">${escHtml(e.actor)}</span> ${escHtml(actionLabel)} <span style="color:var(--text-muted)">[${escHtml(typeLabel)}]</span> <span class="activity-target">${escHtml(e.target)}</span></div>
+        ${e.changes && e.changes.length ? `<details class="act-changes"><summary>查看修改內容（${e.changes.length} 項）</summary>${diffTable(e.changes)}</details>` : ''}
         <div class="activity-ts">${escHtml(e.ts)}</div>
       </div>
     </div>`;
@@ -5083,7 +5321,7 @@ function loadScriptOnce(src) {
     document.head.appendChild(el);
   });
 }
-const PDF_PAGE_TITLES = { contacts: '緊急聯絡人', cards: '保全卡號管理', keys: '鑰匙管理', stores: '客戶店號資料', storeview: '店號聯絡人一覽' };
+const PDF_PAGE_TITLES = { users: '管理中心', contacts: '緊急聯絡人', cards: '保全卡號管理', keys: '鑰匙管理', stores: '客戶店號資料', storeview: '店號聯絡人一覽' };
 
 function pdfBusy(html) {
   let el = document.getElementById('pdfBusy');
@@ -5860,7 +6098,7 @@ async function renderLoginLog() {
   let log = [];
   try { log = await apiJson('/logs/login'); } catch {}
   if (!log.length) { el.innerHTML = '<div class="ll-item" style="color:var(--text-muted)">尚無登入紀錄</div>'; return; }
-  const actionLabel = { login:'登入', logout:'登出', failed:'失敗', locked:'鎖定', expired:'到期', time_restricted:'時段限制', impersonate:'代登' };
+  const actionLabel = { login:'登入', logout:'登出', failed:'失敗', locked:'鎖定', expired:'到期', time_restricted:'時段限制', impersonate:'代登', kicked:'強制登出' };
   el.innerHTML = log.map(e =>
     `<div class="ll-item">
       <span class="ll-ts">${escHtml(e.ts)}</span>
@@ -6268,14 +6506,15 @@ async function loadAllData() {
   // 雲端資料版號跟資料一起抓：查版號很快，會比讀資料先完成，抓的途中有人改了，下一輪查版號就會發現不同而再抓一次
   const isAdmin = !!(_currentUser && (_currentUser.role === 'admin' || _currentUser.role === 'superadmin'));
   const [syncAt, contacts, cards, keys, stores, announcements, blueprints, policy, duty, users, groups, continuousEntry] = await Promise.all([
-    CLOUD_URL ? apiJson('/sync').catch(() => null) : null,
+    CLOUD_URL ? apiJson(syncPath()).catch(() => null) : null,
     pageList(canSeePage('storeview') ? 'storeview' : 'contacts', '/contacts'), pageList('cards', '/cards'), pageList('keys', '/keys'), apiJson('/stores'),
     apiJson('/announcements'), pageList('blueprints', '/blueprints'), apiJson('/systempolicy'),
     apiJson('/appsettings/duty').then(r => (r && r.value) || '').catch(() => ''),
     isAdmin ? apiJson('/users').catch(() => []) : [],
     isAdmin && CLOUD_URL ? apiJson('/groups').catch(() => []) : [],
     apiJson('/appsettings/continuousEntry').then(r => parseContinuous(r && r.value)).catch(() => []),
-  ]);
+    isAdmin && CLOUD_URL ? apiJson('/approvals').catch(() => null) : null,
+  ]).then(r => { _cache.approvals = r.pop() || { settings: {}, items: [] }; return r; });
 
   const activeContacts = contacts.filter(c => c.status === 'active').map(c => fromApiEntity('contacts', c));
   const histContacts = contacts.filter(c => c.status !== 'active').map(c => fromApiEntity('contacts', c));
@@ -7026,8 +7265,217 @@ function cloneUser(id) {
   document.getElementById('userModal').classList.add('open');
 }
 
+function pendingApprovals() {
+  const a = _cache.approvals;
+  return a && a.items ? a.items.filter(x => x.status === 'pending') : [];
+}
+// ══════════════════════════════════════════
+//  管理中心（總管理員）：線上人員、待核准、月報、帳號分析、批次調整
+// ══════════════════════════════════════════
+let _admTab = 'accounts';
+let _presenceTimer = null;
+function switchAdmTab(tab) {
+  _admTab = tab;
+  document.querySelectorAll('#admTabs .adm-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('#page-users .adm-sec').forEach(s => s.classList.toggle('active', s.id === 'adm-' + tab));
+  renderAdmTab(true);
+}
+function renderAdmTab(fresh) {
+  clearInterval(_presenceTimer);
+  if (_admTab === 'online') {
+    renderPresence(fresh);
+    _presenceTimer = setInterval(() => {
+      if (document.hidden || !document.getElementById('page-users').classList.contains('active') || _admTab !== 'online') return;
+      renderPresence(false);
+    }, 15000);
+  }
+  if (_admTab === 'approvals') renderApprovals();
+  if (_admTab === 'report' && fresh) renderReport();
+  if (_admTab === 'analysis' && fresh) renderAnalysis();
+}
+function agoText(secs) {
+  if (secs < 60) return '剛剛';
+  if (secs < 3600) return Math.floor(secs / 60) + ' 分鐘前';
+  return Math.floor(secs / 3600) + ' 小時前';
+}
+
+async function renderPresence(showLoading) {
+  const el = document.getElementById('presenceList');
+  if (showLoading && !el.children.length) el.innerHTML = '<div class="adm-empty">載入中…</div>';
+  let list;
+  try { list = await apiJson('/presence'); } catch (e) { el.innerHTML = `<div class="adm-empty">讀取失敗：${escHtml(e.message)}</div>`; return; }
+  const me = getCurrentUser();
+  const onlineN = list.filter(u => u.online).length;
+  el.innerHTML = `<div class="adm-card" style="grid-column:1/-1"><h4>🟢 ${onlineN} 人在線上</h4><div class="meta">共 ${list.length} 個啟用中的帳號</div></div>` +
+    list.map(u => {
+      const devs = u.devices.filter(d => d.secsAgo <= 600);
+      return `<div class="adm-card">
+        <h4><span class="online-dot ${u.online ? '' : 'off'}"></span>${escHtml(u.displayName || u.username)}
+          <span style="font-size:12px;color:var(--text-muted);font-weight:400">${escHtml(u.username)}・${ROLE_LABELS[u.role] || u.role}</span></h4>
+        ${devs.length ? devs.map(d => `<div class="dev-line">📱 <b>${escHtml(d.device)}</b>${d.page ? `・正在看「${escHtml(d.page)}」` : ''}・${agoText(d.secsAgo)}${d.impersonated ? '（總管理員切換查看）' : ''}</div>`).join('')
+          : `<div class="dev-line">${u.lastLoginAt ? '最後登入 ' + escHtml(u.lastLoginAt) : '從未登入'}</div>`}
+        ${u.role !== 'superadmin' && (!me || me.id !== u.id) ? `<div class="row-actions"><button class="btn btn-sm btn-danger" onclick="kickUser(${u.id})">⏏ 強制登出</button></div>` : ''}
+      </div>`;
+    }).join('');
+}
+
+async function kickUser(id) {
+  const u = DB.get('users').find(x => x.id === id);
+  const name = u ? (u.displayName || u.username) : '這個帳號';
+  if (!confirm(`讓「${name}」所有手機、電腦立刻登出？\n\n他要重新輸入帳號密碼才能再登入（帳號不會停權）。`)) return;
+  try {
+    await apiJson(`/users/${id}/kick`, { method: 'POST' });
+    toast(`已讓「${name}」登出所有裝置`, 'success');
+    if (_admTab === 'online') renderPresence(false);
+  } catch (e) { toast(e.message || '操作失敗', 'error'); }
+}
+
+// ── 待核准 ──
+function renderApprovals() {
+  const data = _cache.approvals || { settings: {}, items: [] };
+  document.getElementById('apprCards').checked = data.settings.cards !== false;
+  document.getElementById('apprKeys').checked = data.settings.keys !== false;
+  const filter = document.getElementById('apprFilter').value;
+  const items = (data.items || []).filter(a => filter === 'all' || a.status === 'pending');
+  const el = document.getElementById('approvalList');
+  if (!items.length) { el.innerHTML = `<div class="adm-empty" style="grid-column:1/-1">${filter === 'all' ? '還沒有任何申請' : '✅ 沒有等待核准的修改'}</div>`; return; }
+  const stLabel = { pending: '待核准', approved: '已核准', rejected: '已退回' };
+  el.innerHTML = items.map(a => `<div class="adm-card">
+    <h4>${a.table === 'keys' ? '🗝️' : '💳'} ${escHtml(a.actionLabel)}${escHtml(a.tableLabel)}「${escHtml(a.label)}」 <span class="appr-status ${a.status}">${stLabel[a.status] || a.status}</span></h4>
+    <div class="meta">👤 ${escHtml(a.requester)}・${escHtml(a.ts)} 送出${a.reviewer ? `<br>✔ ${escHtml(a.reviewer)}・${escHtml(a.reviewedAt || '')}${a.note ? '：' + escHtml(a.note) : ''}` : ''}</div>
+    ${a.changes && a.changes.length ? diffTable(a.changes) : ''}
+    ${a.status === 'pending' ? `<div class="row-actions">
+      <button class="btn btn-sm btn-success" onclick="decideApproval(${a.id}, true)">✔ 同意</button>
+      <button class="btn btn-sm btn-danger" onclick="decideApproval(${a.id}, false)">✖ 退回</button></div>` : ''}
+  </div>`).join('');
+}
+async function decideApproval(id, ok) {
+  let note = '';
+  if (!ok) { note = prompt('退回原因（會讓申請人看到，可空白）：', ''); if (note === null) return; }
+  try {
+    await apiJson(`/approvals/${id}/${ok ? 'approve' : 'reject'}`, { method: 'POST', body: JSON.stringify({ note }) });
+    toast(ok ? '已同意，修改已生效' : '已退回', ok ? 'success' : 'warning');
+  } catch (e) { toast(e.message || '操作失敗', 'error'); }
+  try { await loadAllData(); updateMainBadges(); renderApprovals(); } catch {}
+}
+async function saveApprovalSettings() {
+  const body = { cards: document.getElementById('apprCards').checked, keys: document.getElementById('apprKeys').checked };
+  try {
+    const r = await apiJson('/approvals/settings', { method: 'PUT', body: JSON.stringify(body) });
+    if (_cache.approvals) _cache.approvals.settings = r;
+    toast('已儲存核准設定', 'success');
+  } catch (e) { toast(e.message || '儲存失敗', 'error'); renderApprovals(); }
+}
+
+// ── 月報 ──
+function rptBars(list, unit) {
+  if (!list.length) return '<div class="meta">（這個月沒有紀錄）</div>';
+  const max = Math.max(...list.map(x => x.count), 1);
+  return list.map(x => `<div class="rpt-bar"><span class="nm">${escHtml(x.name)}</span><span class="bar" style="width:${Math.round(x.count / max * 180)}px"></span><span class="ct">${x.count} ${unit}</span></div>`).join('');
+}
+async function renderReport() {
+  const inp = document.getElementById('rptMonth');
+  if (!inp.value) { const d = new Date(); inp.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+  const el = document.getElementById('reportBody');
+  el.innerHTML = '<div class="adm-empty">統計中…</div>';
+  let r;
+  try { r = await apiJson('/reports/monthly?month=' + inp.value); } catch (e) { el.innerHTML = `<div class="adm-empty">讀取失敗：${escHtml(e.message)}</div>`; return; }
+  const [y, m] = r.month.split('-');
+  const num = (n, l) => `<div class="rpt-num"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  el.innerHTML = `
+    <h3 style="margin:0 0 12px">📈 ${y} 年 ${Number(m)} 月 統計報表</h3>
+    ${r.complete ? '' : '<div class="alert-item alert-warn" style="margin-bottom:12px">⚠️ 紀錄只保留最近 3000 筆，這個月較早的紀錄已經被清掉，數字可能偏少。</div>'}
+    <div class="rpt-grid">
+      ${num(r.keys.borrowed, '🗝️ 鑰匙借出次數')}${num(r.keys.returned, '↩️ 鑰匙歸還次數')}${num(r.keys.overdueNow.length, '⏰ 目前逾期未還')}
+      ${num(r.cards.created, '💳 新增卡號')}${num(r.cards.updated, '✏️ 卡號異動')}${num(r.cards.lost, '🚨 卡號掛失')}
+      ${num(r.approvals.submitted, '⏳ 送審件數')}${num(r.approvals.approved, '✔ 核准')}${num(r.approvals.rejected, '✖ 退回')}
+      ${num(r.loginTotal, '🔑 登入次數')}${num(r.failedTotal, '⚠️ 密碼錯誤')}
+    </div>
+    <div class="rpt-block"><h4>⏰ 目前逾期未還的鑰匙</h4>${r.keys.overdueNow.length ? r.keys.overdueNow.map(k => `<div class="rpt-bar">🗝️ <b>${escHtml(k.code)}</b>・${escHtml(k.holder || '未填借用人')}・應還 ${escHtml(k.returnTime)}</div>`).join('') : '<div class="ok-chip">✅ 沒有逾期</div>'}</div>
+    <div class="rpt-block"><h4>💳 30 天內到期的卡片（目前掛失 ${r.cards.lostNow} 張）</h4>${r.cards.expiringSoon.length ? r.cards.expiringSoon.map(c => `<div class="rpt-bar">💳 <b>${escHtml(c.number)}</b>・${escHtml(c.holder)}・${escHtml(c.expiry)} 到期</div>`).join('') : '<div class="ok-chip">✅ 沒有即將到期的卡片</div>'}</div>
+    <div class="rpt-block"><h4>✍️ 各帳號操作次數</h4>${rptBars(r.byActor, '次')}</div>
+    <div class="rpt-block"><h4>🔑 各帳號登入次數</h4>${rptBars(r.byUserLogins, '次')}</div>
+    <div class="rpt-block"><h4>📋 其他異動</h4>
+      <div class="rpt-bar">📞 聯絡人：新增 ${r.contacts.created}、修改 ${r.contacts.updated}、刪除 ${r.contacts.deleted}</div>
+      <div class="rpt-bar">🏪 店號：新增 ${r.stores.created}、修改 ${r.stores.updated}、刪除 ${r.stores.deleted}</div>
+      <div class="rpt-bar">🗝️ 鑰匙：新增 ${r.keys.created}、刪除 ${r.keys.deleted}</div>
+      <div class="rpt-bar">💳 卡號：刪除 ${r.cards.deleted}、停用 ${r.cards.disabled}</div>
+    </div>`;
+}
+
+// ── 帳號使用分析 ──
+async function renderAnalysis() {
+  const el = document.getElementById('analysisList');
+  el.innerHTML = '<div class="adm-empty">分析中…</div>';
+  let list;
+  try { list = await apiJson('/reports/accounts'); } catch (e) { el.innerHTML = `<div class="adm-empty">讀取失敗：${escHtml(e.message)}</div>`; return; }
+  el.innerHTML = list.map(u => {
+    const days = u.daysSinceLogin;
+    const idle = days == null ? '從未登入' : days === 0 ? '今天有登入' : `${days} 天沒登入`;
+    const idleWarn = days == null || days >= 30;
+    return `<div class="adm-card">
+      <h4>${escHtml(u.displayName || u.username)} <span style="font-size:12px;color:var(--text-muted);font-weight:400">${escHtml(u.username)}・${ROLE_LABELS[u.role] || u.role}${u.enabled ? '' : '・已停權'}</span></h4>
+      <div class="meta">
+        ${idleWarn ? `<span style="color:var(--yellow)">💤 ${idle}</span>` : `🕒 ${idle}`}${u.lastLoginAt ? `（${escHtml(u.lastLoginAt)}）` : ''}<br>
+        🔑 近 30 天登入 ${u.logins30} 次${u.failed30 ? `・密碼錯 ${u.failed30} 次` : ''}<br>
+        ${u.topHours.length ? `⏰ 常用時段：${u.topHours.map(h => h + ':00').join('、')}<br>` : ''}
+        ${u.devices.length ? `📱 用過的裝置：${u.devices.map(d => escHtml(d.device) + `（${d.count}）`).join('、')}` : ''}
+      </div>
+      ${u.alerts.length ? u.alerts.map(a => `<span class="alert-chip">⚠️ ${a.ts ? escHtml(a.ts) + '　' : ''}${escHtml(a.reason)}</span>`).join('') : '<span class="ok-chip">✅ 沒有異常</span>'}
+    </div>`;
+  }).join('') || '<div class="adm-empty">沒有帳號</div>';
+}
+
+// ── 批次調整權限 ──
+const _batchSel = new Set();
+function toggleUserSel(id, on) { on ? _batchSel.add(id) : _batchSel.delete(id); updateBatchBar(); }
+function toggleAllUsers(on) {
+  document.querySelectorAll('#usersBody .ub-row').forEach(c => { c.checked = on; toggleUserSel(Number(c.value), on); });
+}
+function clearBatchSelection() { _batchSel.clear(); document.querySelectorAll('#usersBody .ub-row, #ubAll').forEach(c => { c.checked = false; }); updateBatchBar(); }
+function updateBatchBar() {
+  const ids = new Set(DB.get('users').map(u => u.id));
+  [..._batchSel].forEach(id => { if (!ids.has(id)) _batchSel.delete(id); });
+  document.getElementById('batchCount').textContent = _batchSel.size;
+  document.getElementById('batchBar').classList.toggle('show', _batchSel.size > 0 && !!CLOUD_URL);
+}
+function openBatchModal() {
+  const users = DB.get('users').filter(u => _batchSel.has(u.id));
+  if (!users.length) return;
+  document.getElementById('batchWho').textContent = users.map(u => u.displayName || u.username).join('、');
+  document.getElementById('bt_group').innerHTML = '<option value="">不套用群組（改回個別設定）</option>' +
+    DB.get('groups').map(g => `<option value="${g.id}">🧩 ${escHtml(g.name)}</option>`).join('');
+  ['bt_useGroup', 'bt_useExpiry', 'bt_useTime', 'bt_useEnabled'].forEach(id => { document.getElementById(id).checked = false; });
+  ['bt_expiry', 'bt_tStart', 'bt_tEnd'].forEach(id => { document.getElementById(id).value = ''; });
+  // 改了值就自動勾「要調整」
+  [['bt_group', 'bt_useGroup'], ['bt_expiry', 'bt_useExpiry'], ['bt_tStart', 'bt_useTime'], ['bt_tEnd', 'bt_useTime'], ['bt_enabled', 'bt_useEnabled']].forEach(([f, c]) => {
+    document.getElementById(f).onchange = () => { document.getElementById(c).checked = true; };
+  });
+  document.getElementById('modalBatch').classList.add('open');
+}
+async function saveBatch() {
+  const set = {};
+  if (document.getElementById('bt_useGroup').checked) set.groupId = document.getElementById('bt_group').value ? Number(document.getElementById('bt_group').value) : null;
+  if (document.getElementById('bt_useExpiry').checked) set.expiresAt = document.getElementById('bt_expiry').value || null;
+  if (document.getElementById('bt_useTime').checked) { set.loginTimeStart = document.getElementById('bt_tStart').value || null; set.loginTimeEnd = document.getElementById('bt_tEnd').value || null; }
+  if (document.getElementById('bt_useEnabled').checked) set.enabled = document.getElementById('bt_enabled').value === '1';
+  if (!Object.keys(set).length) { toast('請至少勾一個「要調整」的項目', 'error'); return; }
+  try {
+    const r = await apiJson('/users/batch', { method: 'POST', body: JSON.stringify({ ids: [..._batchSel], set }) });
+    closeModal('modalBatch');
+    toast(`已調整 ${r.updated.length} 個帳號${r.skipped.length ? `（略過：${r.skipped.join('、')}）` : ''}`, 'success');
+    clearBatchSelection();
+    await reloadUsersAndGroups();
+    renderUsers();
+  } catch (e) { toast(e.message || '調整失敗', 'error'); }
+}
+
 function updatePendingBadge() {
-  const pending = DB.get('users').filter(u => u.status === 'pending').length;
+  const isSuper = _currentUser && _currentUser.role === 'superadmin';
+  const appr = isSuper ? pendingApprovals().length : 0;
+  const cnt = document.getElementById('admApprCnt');
+  if (cnt) cnt.textContent = appr || '';
+  const pending = DB.get('users').filter(u => u.status === 'pending').length + appr;
   const badge = document.getElementById('badge-users');
   if (pending > 0) {
     badge.textContent = pending + ' 待審';
@@ -7122,6 +7570,7 @@ function validateModuleFields(module, valueMap) {
 function renderUsers() {
   updatePendingBadge();
   renderGroups();
+  setTimeout(updateBatchBar, 0);
   const users = DB.get('users');
   const currentUser = getCurrentUser();
   const tbody = document.getElementById('usersBody');
@@ -7175,6 +7624,7 @@ function renderUsers() {
                  <button class="btn btn-sm" onclick="cloneUser(${u.id})" title="複製帳號">📋</button>
                  ${currentUser && currentUser.role === 'superadmin' && !isSelf && u.role !== 'superadmin' && !isBlocked && CLOUD_URL ? `<button class="btn btn-sm" onclick="impersonateUser(${u.id})" title="切換成這個帳號（不用密碼）">👁 切換</button>` : ''}
                  ${isLocked ? `<button class="btn btn-sm btn-success" onclick="unlockUser(${u.id})" title="解鎖帳號">🔓</button>` : ''}
+                 ${currentUser && currentUser.role === 'superadmin' && !isSelf && u.role !== 'superadmin' && CLOUD_URL ? `<button class="btn btn-sm" onclick="kickUser(${u.id})" title="讓這個帳號所有裝置立刻登出">⏏</button>` : ''}
                  ${u.role !== 'superadmin' && !isSelf ? `<button class="btn btn-sm ${isBlocked ? 'btn-success' : 'btn-danger'}" onclick="toggleUserEnabled(${u.id})" title="${isBlocked ? '恢復登入權限' : '停權（禁止登入）'}" style="font-size:11px;padding:3px 8px;">${isBlocked ? '▶ 復權' : '⏸ 停權'}</button>` : ''}
                  <button class="btn btn-sm btn-warning" onclick="forcePasswordResetUser(${u.id})" title="強制重設密碼">🔑</button>
                  <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})" title="刪除">🗑️</button>`;
@@ -7220,8 +7670,9 @@ function renderUsers() {
       ${u.forcePasswordReset ? '<span class="badge-expiring" style="font-size:10px">🔑 須改密碼</span>' : ''}
     </div>`;
 
+    const canBatch = u.role !== 'superadmin' && !isSelf && !isPending;
     return `<tr style="${rowStyle}">
-      <td>${i + 1}</td>
+      <td>${canBatch ? `<input type="checkbox" class="ub-chk ub-row" value="${u.id}" ${_batchSel.has(u.id) ? 'checked' : ''} onclick="toggleUserSel(${u.id}, this.checked)">` : ''}${i + 1}</td>
       <td><strong>${escHtml(u.username)}</strong>${isSelf ? ' <span style="color:var(--accent-light);font-size:11px;">(我)</span>' : ''}</td>
       <td>${escHtml(u.displayName)}</td>
       <td><span class="role-badge ${u.role}">${ROLE_LABELS[u.role] || u.role}</span></td>
@@ -7422,7 +7873,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '01d5a122c7b2';
+const BUILD_ID = '25a04c840729';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
@@ -7564,7 +8015,7 @@ async function pollSync() {
   if (_syncBusy || !canSyncNow()) return;
   _syncBusy = true;
   try {
-    const r = await apiJson('/sync');
+    const r = await apiJson(syncPath());
     if (!r || r.rev == null) return;
     if (_syncRev == null) { _syncRev = r.rev; return; }
     if (r.rev === _syncRev || !canSyncNow()) return;
@@ -7576,9 +8027,36 @@ async function pollSync() {
     toast('已同步其他裝置的最新資料', 'success');
   } catch (e) {
     console.warn('同步檢查失敗', e);
+    if (e && e.status === 401 && _currentUser) sessionLost(e.message);
   } finally {
     _syncBusy = false;
   }
+}
+
+// 這台裝置的代號（目前誰在線上：同一個帳號開好幾台時分得出來）
+function deviceId() {
+  try {
+    let d = localStorage.getItem('skpro_dev');
+    if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); localStorage.setItem('skpro_dev', d); }
+    return d;
+  } catch { return 'x'; }
+}
+function syncPath() {
+  const pg = (document.querySelector('.page.active') || { id: '' }).id.replace('page-', '');
+  return `/sync?d=${deviceId()}&pg=${encodeURIComponent(pg)}${impersonator() ? '&imp=1' : ''}`;
+}
+// 被總管理員強制登出、帳號被停權：回到登入畫面
+function sessionLost(msg) {
+  if (impersonator()) return; // 切換中的帳號：clearCloudToken 會自動回到總管理員
+  clearSession();
+  _cache = {};
+  applyRole(null);
+  applyPagePermissions(null);
+  document.getElementById('headerUser').innerHTML = '';
+  document.getElementById('logoutBtn').style.display = 'none';
+  document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  showLogin();
+  document.getElementById('loginError').textContent = msg || '登入已失效，請重新登入';
 }
 if (CLOUD_URL) {
   setInterval(pollSync, SYNC_POLL_MS);
