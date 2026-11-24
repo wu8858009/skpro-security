@@ -2189,6 +2189,10 @@
   <div class="mob-tab" onclick="switchPage('storeview')" id="mob-tab-storeview">
     <span class="mt-icon">🗂️</span><span>店號一覽</span>
   </div>
+  <div class="mob-tab" onclick="switchPage('cards')" id="mob-tab-cards">
+    <span class="mt-icon">💳</span><span>卡號</span>
+    <span class="badge" id="mob-badge-cards"></span>
+  </div>
   <div class="mob-tab" onclick="switchPage('keys')" id="mob-tab-keys">
     <span class="mt-icon">🗝️</span><span>鑰匙</span>
     <span class="badge" id="mob-badge-keys"></span>
@@ -3866,7 +3870,7 @@ function renderCards() {
     const ty = !typeF || c.type === typeF;
     return match && st && ty;
   });
-  document.getElementById('badge-cards').textContent = DB.get('cards').length;
+  document.getElementById('badge-cards').textContent = DB.get('cards').length; { const mb = document.getElementById('mob-badge-cards'); if (mb) mb.textContent = DB.get('cards').length; }
   const tbody = document.getElementById('cardsBody');
   if (!data.length) {
     tbody.innerHTML = `<tr><td colspan="10"><div class="no-data"><div class="no-icon">💳</div>尚無卡號資料</div></td></tr>`;
@@ -6240,6 +6244,7 @@ function updateMainBadges() {
   if (histBadge) histBadge.textContent = DB.get('historicalContacts').length;
   document.getElementById('mob-badge-contacts').textContent = DB.get('contacts').length;
   document.getElementById('mob-badge-keys').textContent = DB.get('keys').length;
+  document.getElementById('mob-badge-cards').textContent = DB.get('cards').length;
 }
 
 // Fetches all module data from the API into the in-memory cache. Called right
@@ -7410,7 +7415,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = 'bb2be5f7c944';
+const BUILD_ID = '82189839ef8c';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
