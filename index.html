@@ -2257,7 +2257,7 @@
         <h3>💳 近期卡號異動</h3>
         <ul class="quick-list" id="dashCards"></ul>
       </div>
-      <div class="dash-card dash-activity">
+      <div class="dash-card dash-activity" style="display:none">
         <h3>📋 所有變更紀錄 <span id="dashActivityCount" style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:4px"></span></h3>
         <div class="activity-feed" id="dashActivityFeed"></div>
       </div>
@@ -4600,6 +4600,11 @@ function logActivity() {
   // create/update/delete it handles, so the client no longer needs to.
 }
 async function renderActivityFeed() {
+  // 所有變更紀錄只給總管理員（雲端也會擋）；其他帳號整塊不顯示
+  const box = document.querySelector('#page-dashboard .dash-activity');
+  const isSuper = !!(_currentUser && _currentUser.role === 'superadmin');
+  if (box) box.style.display = isSuper ? '' : 'none';
+  if (!isSuper) return;
   let log = [];
   try { log = await apiJson('/logs/activity'); } catch {}
   const el = document.getElementById('dashActivityFeed');
@@ -7415,7 +7420,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '82189839ef8c';
+const BUILD_ID = '51fda38c84cb';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
