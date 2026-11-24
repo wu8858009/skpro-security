@@ -1009,13 +1009,18 @@
   .pdf-sheet .sv-contacts-table td, .pdf-sheet .sv-contacts-table a { color: #000 !important; }
   .pdf-sheet .sv-card-head { background: #f1f1f1 !important; }
   .pdf-sheet .sv-rank-2, .pdf-sheet .sv-rank-n { background: #eee !important; color: #333 !important; border-color: #aaa !important; }
+  .pdf-sheet.pdf-page .pdf-page-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px;
+    color: #111; border-bottom: 2px solid #8a6400; padding-bottom: 6px; margin-bottom: 10px; flex-shrink: 0; }
+  .pdf-sheet.pdf-page .pdf-page-head span { font-size: 12px; color: #555; }
+  .pdf-sheet.pdf-page .pdf-cols { flex: 1; min-height: 0; column-count: 3; column-gap: 12px; column-fill: auto; }
+  .pdf-sheet.pdf-page .sv-card { display: block; break-inside: avoid; margin: 0 0 10px; border-radius: 8px; }
   .pdf-sheet .sv-rank-1 { background: #ffe9a8 !important; color: #5a4100 !important; border-color: #d4a800 !important; }
   .pdf-sheet .area-tag, .pdf-sheet .site-tag { color: #0b5f58 !important; background: #e3f4f2 !important; border-color: #8fcac3 !important; }
   .pdf-busy { position: fixed; inset: 0; z-index: 100001; background: rgba(7,15,28,0.88); color: #fff; display: flex;
     flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 15px; padding: 20px; text-align: center; }
   .pdf-busy .btn { min-width: 220px; justify-content: center; }
   /* 列印一律橫向 A4 */
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 landscape; margin: 6mm; }
   @media print {
     .header, .nav-tabs, .section-actions, .btn, .search-bar, .modal-overlay { display: none !important; }
     body { background: #fff; color: #000; }
@@ -1033,7 +1038,16 @@
     .imp-bar, .mob-nav, .mob-fab, #installBar, #updateBar, .toast-container, #splash, .pdf-busy { display: none !important; }
     /* 店號一覽：拖曳鍵、拖曳說明不印；一張店卡不要被換頁切成兩半 */
     .sv-drag, .sv-move-btn, .sv-hint, .sv-contacts-table th:last-child, .sv-contacts-table td:last-child:not([colspan]) { display: none !important; }
-    .storeview-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
+    /* 滿版：三直欄由上往下排滿，一欄放不下才換到下一欄、下一頁 */
+    .storeview-grid { display: block !important; column-count: 3; column-gap: 8px; margin-top: 6px !important; }
+    .storeview-grid .sv-card { display: block !important; margin: 0 0 8px !important; border-radius: 8px !important; }
+    #page-storeview .section-header { margin-bottom: 4px !important; }
+    #page-storeview .section-header p, #page-storeview .search-bar, #page-storeview .sv-filter-bar { display: none !important; }
+    .sv-card-head { padding: 6px 10px !important; }
+    .sv-info { padding: 5px 10px !important; }
+    .sv-contacts { padding: 5px 10px 7px !important; }
+    .sv-contacts-table td { padding: 2px 4px !important; }
+    .sv-rank { width: 18px !important; height: 18px !important; font-size: 10px !important; }
     .sv-card, .contact-card, .stat-card, .blueprint-card, .adm-card, .rpt-block, .data-table tr {
       break-inside: avoid; page-break-inside: avoid; }
     .sv-card { background: #fff !important; border: 1px solid #999 !important; }
@@ -5357,6 +5371,50 @@ function pdfBusy(html) {
 }
 function closePdfBusy() { const el = document.getElementById('pdfBusy'); if (el) el.remove(); }
 
+// 店號一覽：每頁是一張 A4 橫式大小的版面，店卡分三直欄由上往下排滿，放不下的整張移到下一頁
+async function buildStoreviewPdf(page, title, stamp, wasMob) {
+  const PW = 1480, PH = Math.round(1480 * 200 / 287); // A4 橫式扣掉 5mm 邊界的比例
+  const cards = [...page.querySelectorAll('#storeviGrid .sv-card')];
+  if (wasMob) document.body.classList.remove('mob-mode');
+  const pages = [];
+  const newPage = () => {
+    const pg = document.createElement('div');
+    pg.className = 'pdf-sheet pdf-page';
+    pg.style.cssText = `width:${PW}px;height:${PH}px;padding:16px 18px;overflow:hidden;display:flex;flex-direction:column`;
+    pg.innerHTML = `<div class="pdf-page-head"><b>新光保全管理系統　${escHtml(title)}</b><span>列印時間：${stamp}　第 ${pages.length + 1} 頁</span></div><div class="pdf-cols"></div>`;
+    document.body.appendChild(pg);
+    pages.push(pg);
+    return pg.querySelector('.pdf-cols');
+  };
+  try {
+    let cols = newPage();
+    for (const c of cards) {
+      const el = c.cloneNode(true);
+      cols.appendChild(el);
+      const overflow = () => el.getBoundingClientRect().right > cols.getBoundingClientRect().right + 2; // 跑到第四欄＝這頁放不下
+      if (overflow() && cols.children.length > 1) {
+        el.remove();
+        cols = newPage();
+        cols.appendChild(el);
+      }
+    }
+    await new Promise(r => setTimeout(r, 50));
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const margin = 5, imgW = 297 - margin * 2;
+    for (let i = 0; i < pages.length; i++) {
+      pdfBusy(`<div style="font-size:30px">📄</div><div>正在產生「${escHtml(title)}」PDF…（${i + 1}/${pages.length} 頁）</div>`);
+      const canvas = await window.html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: 1540 });
+      if (i) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, canvas.height / canvas.width * imgW);
+    }
+    return pdf;
+  } finally {
+    pages.forEach(p => p.remove());
+    if (wasMob) { document.body.classList.add('mob-mode'); fitMobileNav(); }
+  }
+}
+
 async function printPagePdf(type) {
   const title = PDF_PAGE_TITLES[type] || '資料';
   pdfBusy('<div style="font-size:30px">📄</div><div>正在產生「' + escHtml(title) + '」PDF…</div>');
@@ -5367,6 +5425,9 @@ async function printPagePdf(type) {
     const page = document.getElementById('page-' + type);
     const now = new Date();
     const stamp = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    let pdf;
+    if (type === 'storeview') pdf = await buildStoreviewPdf(page, title, stamp, wasMob);
+    else {
     sheet = document.createElement('div');
     sheet.className = 'pdf-sheet';
     sheet.innerHTML = `<div class="pdf-title">新光保全管理系統　${escHtml(title)}</div><div class="pdf-date">列印時間：${stamp}</div>` +
@@ -5388,7 +5449,7 @@ async function printPagePdf(type) {
 
     // 切成 A4 橫式一頁一頁
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageW = 297, pageH = 210, margin = 8;
     const imgW = pageW - margin * 2;
     const pxPerMm = canvas.width / imgW;
@@ -5410,6 +5471,7 @@ async function printPagePdf(type) {
       if (n) pdf.addPage();
       pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, part.height / pxPerMm);
       y = end;
+    }
     }
     const fileName = `新光保全_${title}_${stamp.slice(0, 10).replace(/\//g, '')}.pdf`;
     const blob = pdf.output('blob');
@@ -7916,7 +7978,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '78bda59ea687';
+const BUILD_ID = 'd0cb40fc0a61';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
