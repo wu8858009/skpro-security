@@ -1005,6 +1005,11 @@
   .pdf-sheet .table-wrap, .pdf-sheet .surface, .pdf-sheet .sv-card, .pdf-sheet .stat-card { background: #fff !important; border-color: #c8c8c8 !important; }
   .pdf-sheet .storeview-grid { grid-template-columns: 1fr 1fr 1fr !important; }
   .pdf-sheet .sv-contacts-title span { display: none !important; }
+  .pdf-sheet .sv-contacts-table th:last-child, .pdf-sheet .sv-contacts-table td:last-child:not([colspan]) { display: none !important; }
+  .pdf-sheet .sv-contacts-table td, .pdf-sheet .sv-contacts-table a { color: #000 !important; }
+  .pdf-sheet .sv-card-head { background: #f1f1f1 !important; }
+  .pdf-sheet .sv-rank-2, .pdf-sheet .sv-rank-n { background: #eee !important; color: #333 !important; border-color: #aaa !important; }
+  .pdf-sheet .sv-rank-1 { background: #ffe9a8 !important; color: #5a4100 !important; border-color: #d4a800 !important; }
   .pdf-sheet .area-tag, .pdf-sheet .site-tag { color: #0b5f58 !important; background: #e3f4f2 !important; border-color: #8fcac3 !important; }
   .pdf-busy { position: fixed; inset: 0; z-index: 100001; background: rgba(7,15,28,0.88); color: #fff; display: flex;
     flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 15px; padding: 20px; text-align: center; }
@@ -1019,6 +1024,27 @@
     .data-table td { color: #000; }
     .page { display: block !important; }
     .page:not(.print-target) { display: none !important; }
+    /* 白底深字：畫面用的淡色在紙上看不清楚 */
+    :root, body { --bg: #fff; --surface: #fff; --surface2: #f4f4f4; --border: #bbb; --text: #000; --text-secondary: #222;
+      --text-muted: #444; --accent: #8a6400; --accent-light: #7a5800; }
+    * { box-shadow: none !important; text-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #appScroll { position: static !important; overflow: visible !important; }
+    .container { padding: 0 !important; max-width: none !important; }
+    .imp-bar, .mob-nav, .mob-fab, #installBar, #updateBar, .toast-container, #splash, .pdf-busy { display: none !important; }
+    /* 店號一覽：拖曳鍵、拖曳說明不印；一張店卡不要被換頁切成兩半 */
+    .sv-drag, .sv-move-btn, .sv-hint, .sv-contacts-table th:last-child, .sv-contacts-table td:last-child:not([colspan]) { display: none !important; }
+    .storeview-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
+    .sv-card, .contact-card, .stat-card, .blueprint-card, .adm-card, .rpt-block, .data-table tr {
+      break-inside: avoid; page-break-inside: avoid; }
+    .sv-card { background: #fff !important; border: 1px solid #999 !important; }
+    .sv-card-head { background: #f1f1f1 !important; }
+    .sv-store-no { background: #8a6400 !important; color: #fff !important; }
+    .sv-contacts-table td { color: #000 !important; border-bottom: 1px solid #e2e2e2 !important; }
+    .sv-contacts-table a { color: #000 !important; }
+    .sv-rank-1 { background: #ffe9a8 !important; color: #5a4100 !important; border-color: #d4a800 !important; }
+    .sv-rank-2, .sv-rank-n { background: #eee !important; color: #333 !important; border-color: #aaa !important; }
+    .sv-level-badge { background: transparent !important; color: #333 !important; }
+    .area-tag, .site-tag { color: #0b5f58 !important; background: #e3f4f2 !important; border-color: #8fcac3 !important; }
   }
 
   /* ══════════════════════════════════════════
@@ -5350,7 +5376,13 @@ async function printPagePdf(type) {
     if (wasMob) document.body.classList.remove('mob-mode');
     document.body.appendChild(sheet);
     await new Promise(r => setTimeout(r, 50));
+    // 記下每張卡片、每列的上下緣（之後換頁只切在它們之間）
+    const sheetTop = sheet.getBoundingClientRect().top;
+    const blocks = [...sheet.querySelectorAll('.sv-card, .contact-card, .stat-card, .blueprint-card, .adm-card, .rpt-block, tr')]
+      .map(el => { const r = el.getBoundingClientRect(); return [r.top - sheetTop, r.bottom - sheetTop]; })
+      .filter(([t, b]) => b - t > 4);
     const canvas = await window.html2canvas(sheet, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: 1540 });
+    const cssScale = canvas.height / sheet.offsetHeight;
     sheet.remove(); sheet = null;
     if (wasMob) { document.body.classList.add('mob-mode'); fitMobileNav(); }
 
@@ -5361,12 +5393,23 @@ async function printPagePdf(type) {
     const imgW = pageW - margin * 2;
     const pxPerMm = canvas.width / imgW;
     const sliceH = Math.floor((pageH - margin * 2) * pxPerMm);
-    for (let y = 0, n = 0; y < canvas.height; y += sliceH, n++) {
+    // 這一頁最多到 limit：找一個不會切過任何卡片／列的位置（找不到就照原本的高度切）
+    const safeCut = (y, limit) => {
+      const lo = y + sliceH * 0.4;
+      const cuts = blocks.map(([t]) => t * cssScale - 4).filter(c => c > lo && c <= limit).sort((a, b) => b - a);
+      for (const c of cuts) {
+        if (!blocks.some(([t, b]) => t * cssScale < c && b * cssScale > c)) return Math.floor(c);
+      }
+      return limit;
+    };
+    for (let y = 0, n = 0; y < canvas.height - 2; n++) {
+      const end = y + sliceH >= canvas.height ? canvas.height : safeCut(y, y + sliceH);
       const part = document.createElement('canvas');
-      part.width = canvas.width; part.height = Math.min(sliceH, canvas.height - y);
+      part.width = canvas.width; part.height = end - y;
       part.getContext('2d').drawImage(canvas, 0, y, canvas.width, part.height, 0, 0, canvas.width, part.height);
       if (n) pdf.addPage();
       pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, part.height / pxPerMm);
+      y = end;
     }
     const fileName = `新光保全_${title}_${stamp.slice(0, 10).replace(/\//g, '')}.pdf`;
     const blob = pdf.output('blob');
@@ -5742,7 +5785,7 @@ function renderStoreView() {
       </div>
       ${infoRows ? `<div class="sv-info">${infoRows}</div>` : ''}
       <div class="sv-contacts">
-        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span style="font-size:10px;color:var(--text-muted);font-weight:400">（按住 ☰ 上下拖曳調整，所有裝置同步）</span>' : ''}</div>
+        <div class="sv-contacts-title">聯絡人順位 ${canReorderSv() ? '<span class="sv-hint" style="font-size:10px;color:var(--text-muted);font-weight:400">（按住 ☰ 上下拖曳調整，所有裝置同步）</span>' : ''}</div>
         <table class="sv-contacts-table">
           <thead><tr><th style="width:28px">#</th><th>姓名</th><th>職稱</th><th>手機</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
@@ -7873,7 +7916,7 @@ function deleteBlueprint(id) {
 // 每分鐘、以及切回這個畫面時查一次 version.json，有新版就：
 //   沒在編輯（沒開任何視窗）→ 直接重新載入；正在編輯 → 顯示提示條，按了才更新，避免打到一半的資料不見。
 // 重新載入用 ?v=新版號 的網址，才不會又拿到瀏覽器暫存的舊網頁。
-const BUILD_ID = '25a04c840729';
+const BUILD_ID = '78bda59ea687';
 let _newBuild = null;
 // 正在編輯：開著新增／編輯視窗、看大圖，或游標停在輸入框（例如儀表板的「今日值班」）
 function isBusyEditing() {
